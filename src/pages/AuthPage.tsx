@@ -106,25 +106,47 @@ const BrandPanel: React.FC = () => {
 
 // ─── Login Card ─────────────────────────────────────────────────────────────
 const LoginCard: React.FC<{ onLoginSuccess?: () => void }> = ({ onLoginSuccess }) => {
-  const [email, setEmail] = useState('');
+  const [staffId, setStaffId] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<'admin' | 'nurse' | 'paramedic'>('nurse');
+  const [role, setRole] = useState<'admin' | 'nurse'>('nurse');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
-  const handleSubmit = (e: React.MouseEvent) => {
+  const handleAuth = async (isDemo: boolean, e: React.MouseEvent) => {
     e.preventDefault();
+    if (!isDemo && (!staffId || !password)) {
+      setErrorMsg('Please enter both ID and Password.');
+      return;
+    }
+
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
+    setErrorMsg('');
+    const idToUse = isDemo ? 'DEMO-ADMIN' : staffId;
+    const passToUse = isDemo ? 'Demo@1234' : password;
+
+    try {
+      const res = await fetch('http://localhost:4000/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ staff_id: idToUse, password: passToUse }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        setErrorMsg(data.message || 'Login failed.');
+        return;
+      }
       onLoginSuccess?.();
-    }, 1200);
+    } catch (err) {
+      setErrorMsg('Failed to connect to the server.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const roles = [
     { id: 'admin' as const, label: 'Admin', icon: '⚙' },
     { id: 'nurse' as const, label: 'Nurse', icon: '♥' },
-    { id: 'paramedic' as const, label: 'Paramedic', icon: '✛' },
   ];
 
   return (
@@ -143,22 +165,31 @@ const LoginCard: React.FC<{ onLoginSuccess?: () => void }> = ({ onLoginSuccess }
         <h2 className="font-display text-4xl text-[#0F1C14] leading-tight">
           Welcome<br />Back
         </h2>
-        <p className="text-slate-400 text-sm mt-2 font-light">Sign in to access your clinical dashboard.</p>
+        <p className="text-slate-400 text-sm mt-2 font-light mb-4">Sign in to access your clinical dashboard.</p>
+
+        {/* Error Message */}
+        {errorMsg && (
+          <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100 flex items-start gap-2 mb-4">
+            <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+            </svg>
+            {errorMsg}
+          </div>
+        )}
       </div>
 
       {/* Role selector */}
       <div className="mb-6">
         <label className="block font-mono text-[10px] text-slate-400 tracking-wider mb-2">ACCESS LEVEL</label>
-        <div className="grid grid-cols-3 gap-2 p-1 bg-slate-100 rounded-xl">
+        <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl">
           {roles.map(r => (
             <button
               key={r.id}
               onClick={() => setRole(r.id)}
-              className={`py-2.5 rounded-lg text-sm font-semibold transition-all cursor-pointer ${
-                role === r.id
-                  ? 'bg-white text-[#0F1C14] shadow-sm border border-slate-200'
-                  : 'text-slate-400 hover:text-slate-600'
-              }`}
+              className={`py-2.5 rounded-lg text-sm font-semibold transition-all cursor-pointer ${role === r.id
+                ? 'bg-white text-[#0F1C14] shadow-sm border border-slate-200'
+                : 'text-slate-400 hover:text-slate-600'
+                }`}
             >
               <span className="mr-1.5 text-xs">{r.icon}</span>
               {r.label}
@@ -180,8 +211,9 @@ const LoginCard: React.FC<{ onLoginSuccess?: () => void }> = ({ onLoginSuccess }
             </div>
             <input
               type="text"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
+              value={staffId}
+              onChange={e => setStaffId(e.target.value)}
+              disabled={isLoading}
               placeholder="e.g. TF-2024-NRS-001"
               className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 bg-white text-[#0F1C14] text-sm placeholder-slate-300 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/10 transition-all"
             />
@@ -204,6 +236,7 @@ const LoginCard: React.FC<{ onLoginSuccess?: () => void }> = ({ onLoginSuccess }
               type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={e => setPassword(e.target.value)}
+              disabled={isLoading}
               placeholder="••••••••••••"
               className="w-full pl-10 pr-12 py-3 rounded-xl border border-slate-200 bg-white text-[#0F1C14] text-sm placeholder-slate-300 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/10 transition-all"
             />
@@ -236,7 +269,7 @@ const LoginCard: React.FC<{ onLoginSuccess?: () => void }> = ({ onLoginSuccess }
 
       {/* Submit */}
       <button
-        onClick={handleSubmit}
+        onClick={(e) => handleAuth(false, e)}
         disabled={isLoading}
         className="group relative w-full py-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:bg-emerald-300 text-white font-bold text-sm transition-all cursor-pointer shadow-lg shadow-emerald-500/20 overflow-hidden"
       >
@@ -265,12 +298,15 @@ const LoginCard: React.FC<{ onLoginSuccess?: () => void }> = ({ onLoginSuccess }
       </div>
 
       {/* SSO */}
-      <button className="w-full py-3.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 text-[#0F1C14] font-semibold text-sm transition-all cursor-pointer flex items-center justify-center gap-2.5 shadow-sm">
-        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
-          <path d="M12 4.75L19.25 9v6L12 19.25 4.75 15V9L12 4.75z" stroke="#10B981" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          <path d="M12 8.75v6.5M8.75 12h6.5" stroke="#10B981" strokeWidth="1.5" strokeLinecap="round" />
+      <button
+        onClick={(e) => handleAuth(true, e)}
+        disabled={isLoading}
+        className="w-full py-3.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 text-[#0F1C14] font-semibold text-sm transition-all cursor-pointer flex items-center justify-center gap-2.5 shadow-sm disabled:opacity-50"
+      >
+        <svg className="w-4 h-4 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polygon points="5 3 19 12 5 21 5 3"></polygon>
         </svg>
-        Continue with Organization SSO
+        Start with Demo
       </button>
 
       {/* Footer */}
