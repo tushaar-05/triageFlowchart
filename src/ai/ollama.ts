@@ -12,7 +12,7 @@ export async function callOllama(prompt: string) {
       stream: false,
       // 🔥 THIS IS THE IMPORTANT PART
       options: {
-        temperature: 0,
+        temperature: 0.1,
         top_p: 0.1,
         num_predict: 200
       }
