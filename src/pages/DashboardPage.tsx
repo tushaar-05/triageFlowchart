@@ -6,7 +6,7 @@ import { db } from '../lib/db';
 const DashboardPage: React.FC = () => {
     const [isAddPatientModalOpen, setIsAddPatientModalOpen] = useState(false);
     const [isOnline, setIsOnline] = useState(navigator.onLine);
-    
+
     // Form State
     const [name, setName] = useState('');
     const [age, setAge] = useState('');
@@ -38,7 +38,10 @@ const DashboardPage: React.FC = () => {
     };
 
     const handleStartTriage = async () => {
-        if (!name || !age || !gender || !complaint) return;
+        if (!name || !age || !gender || !complaint) {
+            alert("Please fill out all fields (Name, Age, Gender, Chief Complaint) to start triage.");
+            return;
+        }
         setIsSaving(true);
 
         try {
@@ -57,7 +60,7 @@ const DashboardPage: React.FC = () => {
 
             // If online, we could trigger a background sync here
             setIsAddPatientModalOpen(false);
-            
+
             // Navigate to builder
             navigate('/builder');
         } catch (error) {
@@ -126,13 +129,13 @@ const DashboardPage: React.FC = () => {
 
                 <div className="max-w-2xl w-full mx-auto md:mx-0 mt-auto pb-12">
                     <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-4">Offline Records Engine</h2>
-                    
+
                     <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
                         <ul className="divide-y divide-slate-100">
                             {recentPatients?.length === 0 && (
                                 <li className="px-6 py-8 text-center text-slate-500 text-sm">No recent patients stored offline.</li>
                             )}
-                            
+
                             {recentPatients?.map(patient => (
                                 <li key={patient.id} className="flex items-center justify-between p-4 hover:bg-slate-50 transition-colors">
                                     <div className="flex flex-col">
@@ -142,11 +145,10 @@ const DashboardPage: React.FC = () => {
                                         </div>
                                         <p className="text-xs text-slate-400 mt-1 truncate max-w-[200px]">{patient.chief_complaint}</p>
                                     </div>
-                                    <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${
-                                        patient.synced 
-                                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' 
+                                    <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${patient.synced
+                                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
                                             : 'bg-amber-50 text-amber-700 border border-amber-100'
-                                    }`}>
+                                        }`}>
                                         {patient.synced ? 'Synced' : 'Pending Cloud Sync'}
                                     </span>
                                 </li>
@@ -163,16 +165,16 @@ const DashboardPage: React.FC = () => {
                     <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg flex flex-col">
                         <div className="px-6 py-5 border-b border-slate-100"><h3 className="text-xl font-bold">Add New Patient</h3></div>
                         <div className="p-6 space-y-4">
-                            <input value={name} onChange={e=>setName(e.target.value)} type="text" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none" placeholder="Full Name" />
+                            <input value={name} onChange={e => setName(e.target.value)} type="text" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none" placeholder="Full Name" />
                             <div className="grid grid-cols-2 gap-4">
-                                <input value={age} onChange={e=>setAge(e.target.value)} type="number" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-sm" placeholder="Age" />
-                                <select value={gender} onChange={e=>setGender(e.target.value)} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-sm appearance-none">
+                                <input value={age} onChange={e => setAge(e.target.value)} type="number" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-sm" placeholder="Age" />
+                                <select value={gender} onChange={e => setGender(e.target.value)} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-sm appearance-none">
                                     <option value="">Gender</option>
                                     <option value="male">Male</option>
                                     <option value="female">Female</option>
                                 </select>
                             </div>
-                            <textarea value={complaint} onChange={e=>setComplaint(e.target.value)} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-sm min-h-[100px] resize-none" placeholder="Chief Complaint"></textarea>
+                            <textarea value={complaint} onChange={e => setComplaint(e.target.value)} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-sm min-h-[100px] resize-none" placeholder="Chief Complaint"></textarea>
                         </div>
                         <div className="px-6 py-4 border-t border-slate-100 flex justify-end gap-3">
                             <button onClick={() => setIsAddPatientModalOpen(false)} className="px-5 py-2.5 text-sm font-semibold text-slate-600 bg-white border border-slate-200 rounded-lg">Cancel</button>
