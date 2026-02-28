@@ -246,3 +246,51 @@ Reduces cognitive load on frontline workers
 Improves patient prioritization
 Works in low-resource environments
 Enables faster escalation of high-risk cases
+
+## Model performance & deployment guidance
+
+Below is a concise, actionable summary of the model comparison and recommended requirements for running the preferred local model (HealthSoft 1.3B / `jayasimma/healthsoft`) in the TriageFlow AI app.
+
+### Why HealthSoft (recommended)
+- Lightweight and highly efficient: 1.3B parameters, runs on devices with as little as 4 GB RAM.
+- Strong clinical accuracy for size: MedQA 72.4% (Pass rate 81.3%) and competitive scores on PubMedQA / MedMCQA.
+- Larger context window (4096 tokens) which helps multi-turn and long-history workflows in triage.
+- Privacy-friendly: designed for 100% local processing (no cloud dependency) — important for PHI/HIPAA-sensitive deployments.
+- Low energy and latency footprint, enabling edge and mobile deployment scenarios.
+
+### Minimum and recommended system requirements
+- Minimum: 4 GB RAM, ~3.5 GB free disk space for FP16 model files and runtime artifacts, modern 4+ core CPU.
+- Recommended (laptop / small clinic): 8 GB RAM, 8+ GB free disk, SSD, optional discrete GPU (RTX 4060 class) for improved throughput.
+- Recommended (server): 16+ GB RAM or GPU with 8–24 GB VRAM for higher throughput and parallel users.
+
+
+### Memory & storage guidance
+- Use FP16 weights where possible to reduce footprint (~2.6 GB on disk). Expect runtime memory ~2.8–3.4 GB peak during inference.
+- If using quantization, validate accuracy drop on a small clinical test-suite before deploying.
+
+### Safety, reliability & compliance
+- Built-in safety guardrails: low harmful advice rate (0.9%) and strong dosage/interaction detection metrics.
+- Recommended runtime checks the app should enforce:
+	- Always present model outputs as decision-support, not definitive diagnoses.
+	- Highlight and require clinician confirmation for high-risk recommendations (e.g., medication dosing, emergency escalation).
+	- Log and audit model recommendations (locally) for quality review and incident tracing.
+	- Maintain a fail-safe: when the model confidence is low or an action is high-risk, display conservative recommendations and require escalation.
+- Compliance: keep patient data local; do not send PHI to third-party services. Include administrative controls for access and data retention policies to align with HIPAA where applicable.
+
+
+### Deployment tips for TriageFlow
+- Use Ollama (or your chosen local runtime) to host the `jayasimma/healthsoft` model locally. Prefer FP16 and enable any available runtime quantization only after accuracy validation.
+- For offline mobile/edge deployments, package the model with the app binary or provide an on-device download and verify storage and RAM constraints on target hardware.
+- Provide a toggle in-app for strict safety mode that raises thresholds for “require escalation” and shows additional confirmation UI for any medication/dosage suggestions.
+
+### Limitations & cautions (must be clear in the UI/docs)
+- This model is a triage-assist tool, not a diagnostic or definitive clinical decision-maker.
+- Local model performance is hardware-dependent; always validate on representative local hardware prior to clinical rollout.
+- Keep an incident reporting workflow so clinicians can flag incorrect or unsafe model outputs.
+
+### Next steps (suggested README additions you may want to include)
+- Short “How to run model locally” snippet that documents Ollama install, loading `jayasimma/healthsoft`, and a small benchmark script.
+- Example test prompts and an automated small benchmark harness that runs MedQA-like questions and records accuracy/latency.
+- Short compliance checklist and recommended logging/audit configuration for deployments handling PHI.
+
+These additions will make the README actionable for implementers and clarify hardware, safety, and validation steps for clinical deployments.
