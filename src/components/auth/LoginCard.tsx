@@ -47,7 +47,45 @@ const UserIcon = () => (
 
 const LoginCard: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, _setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [staffId, setStaffId] = useState('');
+  const [password, setPassword] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!staffId || !password) {
+      setErrorMsg('Please enter both Staff ID and Password.');
+      return;
+    }
+
+    setIsLoading(true);
+    setErrorMsg('');
+
+    try {
+      const res = await fetch('http://localhost:4000/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ staff_id: staffId, password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        setErrorMsg(data.message || 'Login failed.');
+        return;
+      }
+
+      // Normally here you'd save the auth token or user context and redirect.
+      // For now, we'll just show a success alert since UI is the focus.
+      alert(`Login Successful!\nWelcome back, ${data.staff.name} (${data.staff.role})`);
+
+    } catch (err) {
+      setErrorMsg('Failed to connect to the server. Is it running?');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="w-full max-w-md mx-auto">
@@ -87,11 +125,21 @@ const LoginCard: React.FC = () => {
 
         {/* Form */}
         <form
-          onSubmit={(e) => e.preventDefault()}
+          onSubmit={handleLogin}
           noValidate
           aria-label="Healthcare worker login form"
         >
           <div className="space-y-5">
+
+            {/* Error Message */}
+            {errorMsg && (
+              <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100 flex items-start gap-2">
+                <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+                {errorMsg}
+              </div>
+            )}
 
             {/* Staff ID */}
             <FormInput
@@ -101,6 +149,9 @@ const LoginCard: React.FC = () => {
               placeholder="e.g. TF-00142"
               autoComplete="username"
               icon={<StaffIdIcon />}
+              value={staffId}
+              onChange={(e) => setStaffId(e.target.value)}
+              disabled={isLoading}
             />
 
             {/* Password */}
@@ -111,6 +162,9 @@ const LoginCard: React.FC = () => {
               placeholder="Enter your password"
               autoComplete="current-password"
               icon={<LockIcon />}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={isLoading}
               rightElement={
                 <button
                   type="button"
