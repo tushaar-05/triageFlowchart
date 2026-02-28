@@ -12,9 +12,9 @@ export async function callOllama(prompt: string) {
       stream: false,
       // 🔥 THIS IS THE IMPORTANT PART
       options: {
-        temperature: 0,        // makes output deterministic
+        temperature: 0,
         top_p: 0.1,
-        num_predict: 300,      // limit output length
+        num_predict: 200
       }
     }),
   });
