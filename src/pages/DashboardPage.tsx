@@ -235,6 +235,7 @@ const DashboardPage: React.FC = () => {
                                 Cancel
                             </button>
                             <button
+                                onClick={() => navigate('/builder')}
                                 className="px-5 py-2.5 text-sm font-semibold text-white bg-teal-600 rounded-lg hover:bg-teal-700 shadow-sm transition-colors focus:outline-none focus:ring-4 focus:ring-teal-600/30 active:scale-[0.98]"
                             >
                                 Start Triage

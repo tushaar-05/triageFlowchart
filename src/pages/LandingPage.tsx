@@ -40,7 +40,7 @@ const VitalSignsMockup = () => {
 
     useEffect(() => {
         const interval = setInterval(() => {
-            setReading(prev => 95 + Math.random() * 6);
+            setReading(() => 95 + Math.random() * 6);
         }, 2000);
         return () => clearInterval(interval);
     }, []);
