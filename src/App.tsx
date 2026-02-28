@@ -2,9 +2,28 @@ import { useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
+import { callAI } from "./ai/triageEngine";
+import { checkRedFlags } from "./ai/guardrails";
 
 function App() {
   const [count, setCount] = useState(0)
+  const [input, setInput] = useState("");
+  const [currentNode, setCurrentNode] = useState<any>(null);
+  const startTriage = async () => {
+  if (!input) return;
+
+  // 🔴 Step 1: Guardrail
+  const redFlag = checkRedFlags(input);
+
+  if (redFlag) {
+    setCurrentNode(redFlag);
+    return;
+  }
+
+  // 🤖 Step 2: Call AI
+  const aiNode = await callAI(input, []);
+  setCurrentNode(aiNode);
+};
 
   return (
     <>
