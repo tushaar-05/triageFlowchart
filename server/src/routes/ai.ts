@@ -12,9 +12,14 @@ router.post('/suggest-layer', async (req, res) => {
         You are an expert triage AI. Focus: Medical protocols.
         Patient complaint: "${complaint}".
         We are at triage level ${currentLevel}. 
-        Return an array of EXACTLY 3 JSON objects representing strictly formatted follow-up questions to ask the patient.
-        Format must exact match: [{ "id": "q1", "question": "Are you experiencing shortness of breath?", "type": "Binary", "options": ["Yes", "No"] }]
-        Provide only valid JSON array.
+        Return a JSON array containing EXACTLY 3 strictly formatted follow-up questions to ask the patient.
+        You MUST wrap the output in a JSON array. DO NOT output a single object.
+        Format must exact match: 
+        [
+          { "id": "q1", "question": "Are you experiencing shortness of breath?", "type": "Binary", "options": ["Yes", "No"] },
+          { "id": "q2", "question": "Does the pain radiate?", "type": "Binary", "options": ["Yes", "No"] },
+          { "id": "q3", "question": "How long has it lasted?", "type": "Multiple Choice", "options": ["<1 hr", "1-24 hrs", ">24 hrs"] }
+        ]
     `;
 
   try {
@@ -27,16 +32,53 @@ router.post('/suggest-layer', async (req, res) => {
     // Parse JSON output
     let content = response.message.content;
 
-    // Basic sanitization in case ollama outputs markdown
-    if (content.startsWith('```json')) content = content.substring(7);
-    if (content.endsWith('```')) content = content.substring(0, content.length - 3);
+    // Robust extraction for models that add conversational text around JSON
+    const startArr = content.indexOf('[');
+    const endArr = content.lastIndexOf(']');
+    const startObj = content.indexOf('{');
+    const endObj = content.lastIndexOf('}');
 
-    const suggestions = JSON.parse(content.trim());
+    // Pick whichever brackets correctly enclose valid JSON
+    if (startArr !== -1 && endArr !== -1 && (startObj === -1 || startArr < startObj)) {
+      content = content.slice(startArr, endArr + 1);
+    } else if (startObj !== -1 && endObj !== -1) {
+      content = content.slice(startObj, endObj + 1);
+    }
 
-    // Quick map to ensure IDs are somewhat unique
-    const mappedSuggestions = suggestions.map((s: any, i: number) => ({
-      ...s,
-      id: `sq-l${currentLevel}-${i}-${Date.now()}`
+    console.log("Extracted content to parse:", content);
+    const parsed = JSON.parse(content.trim());
+    console.log("Parsed JSON:", JSON.stringify(parsed, null, 2));
+
+    let suggestionsArray: any[] = [];
+    if (Array.isArray(parsed)) {
+      suggestionsArray = parsed;
+    } else if (parsed.question && Array.isArray(parsed.options)) {
+      // The model returned a single question object instead of an array!
+      suggestionsArray = [parsed];
+    } else if (parsed.questions && Array.isArray(parsed.questions)) {
+      suggestionsArray = parsed.questions;
+    } else if (parsed.suggestions && Array.isArray(parsed.suggestions)) {
+      suggestionsArray = parsed.suggestions;
+    } else {
+      // Last resort: search for ANY array inside the object
+      for (const val of Object.values(parsed)) {
+        if (Array.isArray(val) && val.length > 0 && typeof val[0] === 'object') {
+          suggestionsArray = val as any[];
+          break;
+        }
+      }
+    }
+
+    if (!suggestionsArray || suggestionsArray.length === 0) {
+      throw new Error("Could not extract a valid array from AI output.");
+    }
+
+    // Quick map to ensure IDs are somewhat unique and schema is safe
+    const mappedSuggestions = suggestionsArray.map((s: any, i: number) => ({
+      id: `sq-l${currentLevel}-${i}-${Date.now()}`,
+      question: s.question || "Unable to parse question from AI",
+      type: s.type || "Binary",
+      options: Array.isArray(s.options) ? s.options : ["Yes", "No"],
     }));
 
     res.json({ success: true, suggestions: mappedSuggestions });
