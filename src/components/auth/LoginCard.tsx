@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import FormInput from '../ui/FormInput';
-import SelectInput from '../ui/SelectInput';
+
 import Button from '../ui/Button';
 
-// ─── SVG Icon helpers ─────────────────────────────────────────────────────────
 
-const MailIcon = () => (
+const StaffIdIcon = () => (
   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <rect x="3" y="4" width="18" height="16" rx="2" strokeWidth={1.75} />
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75}
-      d="M4 4h16v16H4V4zm0 0l8 9 8-9" />
+      d="M8 10h8M8 14h5" />
+    <circle cx="6.5" cy="9" r="1" fill="currentColor" stroke="none" />
   </svg>
 );
 
@@ -16,13 +17,6 @@ const LockIcon = () => (
   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
     <rect x="3" y="11" width="18" height="11" rx="2" strokeWidth={1.75} />
     <path strokeLinecap="round" strokeWidth={1.75} d="M7 11V7a5 5 0 0110 0v4" />
-  </svg>
-);
-
-const BadgeIcon = () => (
-  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75}
-      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
   </svg>
 );
 
@@ -49,16 +43,6 @@ const UserIcon = () => (
   </svg>
 );
 
-// ─── Role options ─────────────────────────────────────────────────────────────
-
-const ROLE_OPTIONS = [
-  { value: '', label: 'Select your role…' },
-  { value: 'nurse', label: 'Nurse' },
-  { value: 'paramedic', label: 'Paramedic' },
-  { value: 'community_worker', label: 'Community Health Worker' },
-  { value: 'admin', label: 'Administrator' },
-];
-
 // ─── LoginCard ────────────────────────────────────────────────────────────────
 
 interface LoginCardProps {
@@ -67,7 +51,45 @@ interface LoginCardProps {
 
 const LoginCard: React.FC<LoginCardProps> = ({ onLoginSuccess }) => {
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, _setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [staffId, setStaffId] = useState('');
+  const [password, setPassword] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!staffId || !password) {
+      setErrorMsg('Please enter both Staff ID and Password.');
+      return;
+    }
+
+    setIsLoading(true);
+    setErrorMsg('');
+
+    try {
+      const res = await fetch('http://localhost:4000/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ staff_id: staffId, password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        setErrorMsg(data.message || 'Login failed.');
+        return;
+      }
+
+      // Normally here you'd save the auth token or user context and redirect.
+      // For now, we'll just show a success alert since UI is the focus.
+      alert(`Login Successful!\nWelcome back, ${data.staff.name} (${data.staff.role})`);
+
+    } catch (err) {
+      setErrorMsg('Failed to connect to the server. Is it running?');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="w-full max-w-md mx-auto">
@@ -107,20 +129,33 @@ const LoginCard: React.FC<LoginCardProps> = ({ onLoginSuccess }) => {
 
         {/* Form */}
         <form
-          onSubmit={(e) => e.preventDefault()}
+          onSubmit={handleLogin}
           noValidate
           aria-label="Healthcare worker login form"
         >
           <div className="space-y-5">
 
-            {/* Email */}
+            {/* Error Message */}
+            {errorMsg && (
+              <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100 flex items-start gap-2">
+                <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+                {errorMsg}
+              </div>
+            )}
+
+            {/* Staff ID */}
             <FormInput
-              id="auth-email"
-              label="Email Address"
-              type="email"
-              placeholder="name@clinic.org"
-              autoComplete="email"
-              icon={<MailIcon />}
+              id="auth-staff-id"
+              label="Staff ID"
+              type="text"
+              placeholder="e.g. TF-00142"
+              autoComplete="username"
+              icon={<StaffIdIcon />}
+              value={staffId}
+              onChange={(e) => setStaffId(e.target.value)}
+              disabled={isLoading}
             />
 
             {/* Password */}
@@ -131,6 +166,9 @@ const LoginCard: React.FC<LoginCardProps> = ({ onLoginSuccess }) => {
               placeholder="Enter your password"
               autoComplete="current-password"
               icon={<LockIcon />}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={isLoading}
               rightElement={
                 <button
                   type="button"
@@ -144,13 +182,6 @@ const LoginCard: React.FC<LoginCardProps> = ({ onLoginSuccess }) => {
               }
             />
 
-            {/* Role */}
-            <SelectInput
-              id="auth-role"
-              label="Your Role"
-              icon={<BadgeIcon />}
-              options={ROLE_OPTIONS}
-            />
 
             {/* Forgot password */}
             <div className="flex justify-end -mt-1">

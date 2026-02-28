@@ -1,34 +1,51 @@
 // src/ai/triageEngine.ts
 import { callOllama } from "./ollama";
 
-export async function callAI(input: string, history: string[]) {
-  const systemPrompt = `
-You are HealthSoft Triage Assistant running locally for rural healthcare workers.
-
-You must output ONLY JSON.
-
-Rules:
-- Ask ONE question at a time
-- Use simple options
-- If enough info → give final result
-- If uncertain → HIGH risk
-
-Formats:
-
-Question:
-{
-  "type": "question",
-  "question": "...",
-  "options": ["Yes", "No"]
+function extractJSON(text: string) {
+  const start = text.indexOf("{");
+  const end = text.lastIndexOf("}");
+  if (start === -1 || end === -1) return null;
+  return text.slice(start, end + 1);
 }
 
-Result:
+function normalizeRisk(risk: string) {
+  const r = risk.toUpperCase();
+  if (r.includes("HIGH")) return "HIGH";
+  if (r.includes("MEDIUM")) return "MEDIUM";
+  return "LOW";
+}
+
+export async function callAI(input: string, history: string[]) {
+  const systemPrompt = `
+You are a clinical triage assistant.
+
+You MUST follow these rules strictly:
+
+1. Output ONLY valid JSON
+2. Do NOT include explanations
+3. Do NOT include markdown
+3. Do NOT include <think> tags
+4. Do NOT include text before or after JSON
+
+If asking a question:
+{
+  "type": "question",
+  "question": "string",
+  "options": ["option1", "option2", "option3"]
+}
+
+If final result:
 {
   "type": "result",
   "risk_level": "LOW | MEDIUM | HIGH",
-  "reason": "...",
-  "action": "..."
+  "reason": "short reason",
+  "action": "clear action"
 }
+
+Rules:
+- If chest pain or breathing issue → HIGH
+- If uncertain → HIGH
+- Ask one question at a time
 `;
 
   const fullPrompt = `
@@ -36,23 +53,42 @@ ${systemPrompt}
 
 PATIENT INPUT: ${input}
 HISTORY: ${history.join(" -> ")}
+
+Respond ONLY in JSON.
 `;
 
   const raw = await callOllama(fullPrompt);
 
-  // 🧠 Convert string → JSON safely
+  const jsonString = extractJSON(raw);
+
+  // 🛑 if no JSON found
+  if (!jsonString) {
+    console.error("No JSON found:", raw);
+    return {
+      type: "result",
+      risk_level: "HIGH",
+      reason: "Invalid AI output",
+      action: "Refer to doctor immediately"
+    };
+  }
+
   try {
-    const parsed = JSON.parse(raw);
+    const parsed = JSON.parse(jsonString);
+
+    // 🧠 normalize risk level
+    if (parsed.type === "result") {
+      parsed.risk_level = normalizeRisk(parsed.risk_level);
+    }
+
     return parsed;
   } catch (err) {
-    console.error("JSON parse failed", raw);
+    console.error("Parse failed:", raw);
 
-    // fallback safety
     return {
       type: "result",
       risk_level: "HIGH",
       reason: "AI output parsing failed",
-      action: "Refer to doctor immediately",
+      action: "Refer to doctor immediately"
     };
   }
 }
