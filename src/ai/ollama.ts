@@ -10,10 +10,11 @@ export async function callOllama(prompt: string) {
       model: "jayasimma/healthsoft",
       prompt: prompt,
       stream: false,
+      // 🔥 THIS IS THE IMPORTANT PART
       options: {
-        temperature: 0.1,
+        temperature: 0,        // makes output deterministic
         top_p: 0.1,
-        num_predict: 200
+        num_predict: 300,      // limit output length
       }
     }),
   });
