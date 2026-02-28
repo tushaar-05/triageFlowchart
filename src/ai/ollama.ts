@@ -1,4 +1,6 @@
 export async function callOllama(prompt: string) {
+  console.log("🚀 SENDING PROMPT TO OLLAMA:\n", prompt);
+
   const response = await fetch("http://localhost:11434/api/generate", {
     method: "POST",
     headers: {
@@ -8,17 +10,17 @@ export async function callOllama(prompt: string) {
       model: "jayasimma/healthsoft",
       prompt: prompt,
       stream: false,
-
-      // 🔥 THIS IS THE IMPORTANT PART
       options: {
-        temperature: 0,        // makes output deterministic
+        temperature: 0,
         top_p: 0.1,
-        num_predict: 300,      // limit output length
+        num_predict: 200
       }
     }),
   });
 
   const data = await response.json();
+
+  console.log("🧠 RAW MODEL RESPONSE:\n", data.response);
 
   return data.response;
 }
