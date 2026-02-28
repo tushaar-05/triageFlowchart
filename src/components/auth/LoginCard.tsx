@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import FormInput from '../ui/FormInput';
-import SelectInput from '../ui/SelectInput';
+
 import Button from '../ui/Button';
 
-// ─── SVG Icon helpers ─────────────────────────────────────────────────────────
 
-const MailIcon = () => (
+const StaffIdIcon = () => (
   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <rect x="3" y="4" width="18" height="16" rx="2" strokeWidth={1.75} />
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75}
-      d="M4 4h16v16H4V4zm0 0l8 9 8-9" />
+      d="M8 10h8M8 14h5" />
+    <circle cx="6.5" cy="9" r="1" fill="currentColor" stroke="none" />
   </svg>
 );
 
@@ -16,13 +17,6 @@ const LockIcon = () => (
   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
     <rect x="3" y="11" width="18" height="11" rx="2" strokeWidth={1.75} />
     <path strokeLinecap="round" strokeWidth={1.75} d="M7 11V7a5 5 0 0110 0v4" />
-  </svg>
-);
-
-const BadgeIcon = () => (
-  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75}
-      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
   </svg>
 );
 
@@ -48,16 +42,6 @@ const UserIcon = () => (
       d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
   </svg>
 );
-
-// ─── Role options ─────────────────────────────────────────────────────────────
-
-const ROLE_OPTIONS = [
-  { value: '', label: 'Select your role…' },
-  { value: 'nurse', label: 'Nurse' },
-  { value: 'paramedic', label: 'Paramedic' },
-  { value: 'community_worker', label: 'Community Health Worker' },
-  { value: 'admin', label: 'Administrator' },
-];
 
 // ─── LoginCard ────────────────────────────────────────────────────────────────
 
@@ -109,14 +93,14 @@ const LoginCard: React.FC = () => {
         >
           <div className="space-y-5">
 
-            {/* Email */}
+            {/* Staff ID */}
             <FormInput
-              id="auth-email"
-              label="Email Address"
-              type="email"
-              placeholder="name@clinic.org"
-              autoComplete="email"
-              icon={<MailIcon />}
+              id="auth-staff-id"
+              label="Staff ID"
+              type="text"
+              placeholder="e.g. TF-00142"
+              autoComplete="username"
+              icon={<StaffIdIcon />}
             />
 
             {/* Password */}
@@ -140,13 +124,6 @@ const LoginCard: React.FC = () => {
               }
             />
 
-            {/* Role */}
-            <SelectInput
-              id="auth-role"
-              label="Your Role"
-              icon={<BadgeIcon />}
-              options={ROLE_OPTIONS}
-            />
 
             {/* Forgot password */}
             <div className="flex justify-end -mt-1">
