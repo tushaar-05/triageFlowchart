@@ -2,16 +2,21 @@ import { useState } from 'react';
 import './index.css';
 import AuthPage from './pages/AuthPage';
 import LandingPage from './pages/LandingPage';
+import DashboardPage from './pages/DashboardPage';
 
 function App() {
-  const [currentPage, setCurrentPage] = useState<'landing' | 'auth'>('landing');
+  const [currentPage, setCurrentPage] = useState<'landing' | 'auth' | 'dashboard'>('landing');
 
   return (
     <>
-      {currentPage === 'landing' ? (
+      {currentPage === 'landing' && (
         <LandingPage onLoginClick={() => setCurrentPage('auth')} />
-      ) : (
-        <AuthPage /* Maybe add an onBackClick if needed later */ />
+      )}
+      {currentPage === 'auth' && (
+        <AuthPage onLoginSuccess={() => setCurrentPage('dashboard')} />
+      )}
+      {currentPage === 'dashboard' && (
+        <DashboardPage />
       )}
     </>
   );

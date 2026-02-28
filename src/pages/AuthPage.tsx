@@ -2,6 +2,10 @@ import React from 'react';
 import BrandPanel from '../components/auth/BrandPanel';
 import LoginCard from '../components/auth/LoginCard';
 
+interface AuthPageProps {
+  onLoginSuccess?: () => void;
+}
+
 /**
  * AuthPage – Full-page authentication screen for TriageFlow AI.
  *
@@ -11,7 +15,7 @@ import LoginCard from '../components/auth/LoginCard';
  *
  * No backend / auth / routing logic is included.
  */
-const AuthPage: React.FC = () => {
+const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess }) => {
   return (
     <div className="min-h-screen auth-bg flex flex-col lg:flex-row" role="main">
 
@@ -28,7 +32,7 @@ const AuthPage: React.FC = () => {
         className="flex-1 flex items-center justify-center px-5 py-12 lg:py-16"
         aria-label="Login form"
       >
-        <LoginCard />
+        <LoginCard onLoginSuccess={onLoginSuccess} />
       </section>
     </div>
   );
