@@ -13,6 +13,10 @@ const port = process.env.PORT || 4000;
 
 app.use(cors());
 app.use(express.json());
+// Root endpoint so Render health checks and browser testing don't say "Cannot GET /"
+app.get('/', (_req, res) => {
+  res.send('TriageFlow API is live and running. Use /api/* endpoints.');
+});
 
 // API Routes
 app.use('/api/auth', authRoutes);
