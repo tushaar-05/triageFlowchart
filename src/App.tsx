@@ -12,7 +12,7 @@ const AppRoutes: React.FC = () => {
     <Routes>
       <Route path="/" element={<LandingPage onLoginClick={() => navigate('/auth')} />} />
       <Route path="/auth" element={<AuthPage onLoginSuccess={() => navigate('/dashboard')} />} />
-      <Route path="/dashboard" element={<DashboardPage onLogout={() => navigate('/auth')} onBuilderClick={() => navigate('/builder')} />} />
+      <Route path="/dashboard" element={<DashboardPage />} />
       <Route path="/builder" element={<ProtocolBuilderPage onBack={() => navigate('/dashboard')} />} />
     </Routes>
   );
