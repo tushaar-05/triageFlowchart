@@ -283,14 +283,8 @@ Below is a concise, actionable summary of the model comparison and recommended r
 - For offline mobile/edge deployments, package the model with the app binary or provide an on-device download and verify storage and RAM constraints on target hardware.
 - Provide a toggle in-app for strict safety mode that raises thresholds for “require escalation” and shows additional confirmation UI for any medication/dosage suggestions.
 
-### Limitations & cautions (must be clear in the UI/docs)
+### Limitations & cautions
 - This model is a triage-assist tool, not a diagnostic or definitive clinical decision-maker.
 - Local model performance is hardware-dependent; always validate on representative local hardware prior to clinical rollout.
 - Keep an incident reporting workflow so clinicians can flag incorrect or unsafe model outputs.
 
-### Next steps (suggested README additions you may want to include)
-- Short “How to run model locally” snippet that documents Ollama install, loading `jayasimma/healthsoft`, and a small benchmark script.
-- Example test prompts and an automated small benchmark harness that runs MedQA-like questions and records accuracy/latency.
-- Short compliance checklist and recommended logging/audit configuration for deployments handling PHI.
-
-These additions will make the README actionable for implementers and clarify hardware, safety, and validation steps for clinical deployments.

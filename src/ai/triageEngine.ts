@@ -17,6 +17,8 @@ function normalizeRisk(risk: string) {
 
 export async function callAI(input: string, history: string[]) {
   const systemPrompt = `
+You MUST return STRICT JSON only. Any other format is invalid.
+
 You are a clinical triage assistant.
 
 You MUST follow these rules strictly:
@@ -24,8 +26,8 @@ You MUST follow these rules strictly:
 1. Output ONLY valid JSON
 2. Do NOT include explanations
 3. Do NOT include markdown
-3. Do NOT include <think> tags
-4. Do NOT include text before or after JSON
+4. Do NOT include <think> tags
+5. Do NOT include text before or after JSON
 
 If asking a question:
 {
