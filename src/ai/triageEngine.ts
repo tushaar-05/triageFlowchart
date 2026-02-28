@@ -1,11 +1,18 @@
 // src/ai/triageEngine.ts
 import { callOllama } from "./ollama";
+import { checkRedFlags } from "./guardrails";
 
 function extractJSON(text: string) {
-  const start = text.indexOf("{");
-  const end = text.lastIndexOf("}");
+  // Try to strip out <think> blocks if the model outputs them despite instructions
+  let cleanedText = text;
+  if (text.includes('</think>')) {
+    cleanedText = text.split('</think>').pop() || '';
+  }
+
+  const start = cleanedText.indexOf("{");
+  const end = cleanedText.lastIndexOf("}");
   if (start === -1 || end === -1) return null;
-  return text.slice(start, end + 1);
+  return cleanedText.slice(start, end + 1);
 }
 
 function normalizeRisk(risk: string) {
@@ -16,52 +23,83 @@ function normalizeRisk(risk: string) {
 }
 
 export async function callAI(input: string, history: string[]) {
+  // 🛡️ 1. Run Guardrails First (Offline, instant, deterministic)
+  const redFlagMatch = checkRedFlags(input);
+  if (redFlagMatch) {
+    console.log("🚨 GUARDRAIL ENGAGED: Skipped AI, returning instant result.");
+    return redFlagMatch;
+  }
+
+  // 🤖 2. If no red flags, call Ollama AI
   const systemPrompt = `
 You MUST return STRICT JSON only. Any other format is invalid.
 
 You are a clinical triage assistant for a nurse.
 
 You MUST follow these rules strictly:
-
 1. Output ONLY valid JSON
 2. Do NOT include explanations
 3. Do NOT include markdown
 4. Do NOT include <think> tags
 5. Do NOT include text before or after JSON
 
-If you DO NOT have enough information and need to ask follow-up questions, use this format:
+Your output MUST ALWAYS be strictly valid JSON.
+
+If you can confidently make a final assessment based on the provided symptoms, output EXACTLY this JSON structure:
+{
+  "type": "result",
+  "risk_level": "LOW" | "MEDIUM" | "HIGH",
+  "reason": "short explanation for the risk level",
+  "action": "clear medical action to take"
+}
+
+If you DO NOT have enough information and must ask a follow-up question, output EXACTLY this JSON structure:
 {
   "type": "question",
-  "suggested_questions": [
+  "risk_level": "LOW",
+  "reason": "reasoning for why you need more information",
+  "follow_up_questions": [
     {
-      "question": "Clear and concise follow up question",
-      "options": ["Option 1", "Option 2", "Option 3"],
-      "severity": "HIGH | MEDIUM | LOW"
+      "question": "<YOUR 1ST GENERATED QUESTION HERE>",
+      "priority": "HIGH",
+      "expected_answers": ["<OPTION 1>", "<OPTION 2>", "<OPTION 3>", "Other"]
+    },
+    {
+      "question": "<YOUR 2ND GENERATED QUESTION HERE>",
+      "priority": "MEDIUM",
+      "expected_answers": ["<OPTION 1>", "<OPTION 2>", "<OPTION 3>", "Other"]
+    },
+    {
+      "question": "<YOUR 3RD GENERATED QUESTION HERE>",
+      "priority": "MEDIUM",
+      "expected_answers": ["<OPTION 1>", "<OPTION 2>", "<OPTION 3>", "Other"]
+    },
+    {
+      "question": "<YOUR 4TH GENERATED QUESTION HERE>",
+      "priority": "LOW",
+      "expected_answers": ["<OPTION 1>", "<OPTION 2>", "<OPTION 3>", "Other"]
     }
   ]
 }
 
-If you have enough information to make a final triage decision, use this format:
-{
-  "type": "result",
-  "risk_level": "LOW | MEDIUM | HIGH",
-  "reason": "short reason why this risk level was chosen",
-  "action": "clear action to take"
-}
-
-Important Rules for Questions:
-- If symptoms are vague (e.g., "stomach ache", "headache"), ALWAYS return "type": "question" to ask follow-up questions first.
-- You must generate up to 4 or 5 'suggested_questions' that the nurse might need to ask next.
-- For each expected question, provide exactly 3 expected 'options' why this might be happening (The UI will automatically add a text box for "Other").
-- Provide the 'severity' of whether it should actually be asked (HIGH, MEDIUM, LOW).
-- Do not jump to HIGH risk immediately unless the user explicitly mentions emergency symptoms like severe chest pain, inability to breathe, or loss of consciousness.
+Rules:
+- 🛑 CRITICAL: Carefully read the CONVERSATION TRANSCRIPT below. You must evaluate the patient's latest message in the context of the entire conversation.
+- If the patient definitively reports chest pain or breathing issues anywhere in the transcript → risk_level: "HIGH", type: "result"
+- 🛑 CRITICAL: If the combined symptoms from the transcript are still vague, you MUST use the "question" JSON structure.
+- When using the "question" structure, generate EXACTLY 4 highly relevant, unique follow-up questions you could ask based on their specific symptoms. Do NOT copy the example from the prompt.
+- For EACH question, assign a "priority" ("HIGH", "MEDIUM", or "LOW") based on how urgent or critical that specific question is for triage.
+- For EACH question, provide EXACTLY ONE array called "expected_answers" containing EXACTLY 4 items. The first 3 items must be short expected answers, and the 4th item MUST be exactly the string "Other". Do not use duplicate keys.
+- ALWAYS ask questions until you are confident in a final risk level to return as a "result".
 `;
+
+  // Format the history and input as a single continuous transcript
+  const transcript = [...history, `Patient: ${input}`].join("\n");
 
   const fullPrompt = `
 ${systemPrompt}
 
-PATIENT INPUT: ${input}
-HISTORY: ${history.join(" -> ")}
+CONVERSATION TRANSCRIPT:
+${transcript}
 
 Respond ONLY in JSON.
 `;
