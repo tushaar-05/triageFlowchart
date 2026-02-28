@@ -16,7 +16,7 @@ function App() {
         <AuthPage onLoginSuccess={() => setCurrentPage('dashboard')} />
       )}
       {currentPage === 'dashboard' && (
-        <DashboardPage />
+        <DashboardPage onLogout={() => setCurrentPage('auth')} />
       )}
     </>
   );
