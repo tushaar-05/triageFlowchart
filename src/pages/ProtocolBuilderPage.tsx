@@ -169,32 +169,51 @@ const FlowCanvas = () => {
     // Triage App State
     const [complaint, setComplaint] = useState('');
     const [hasStarted, setHasStarted] = useState(false);
-    const [suggestions, setSuggestions] = useState<any[]>(LEVEL_1_SUGGESTIONS);
+    const [suggestions, setSuggestions] = useState<any[]>([]);
     const [isAiThinking, setIsAiThinking] = useState(false);
 
     // Level tracking
     const [currentLevel, setCurrentLevel] = useState(1);
     const reactFlowWrapper = useRef<HTMLDivElement>(null);
 
-    // Dynamic layer generation
-    const generateNextLayer = useCallback((nextLevel: number) => {
+    // Dynamic layer generation talking to Ollama API!
+    const generateNextLayer = useCallback(async (nextLevel: number) => {
         setIsAiThinking(true);
         setSuggestions([]);
 
-        setTimeout(() => {
-            const nextSugs = nextLevel === 2 ? LEVEL_2_SUGGESTIONS : nextLevel === 3 ? LEVEL_3_SUGGESTIONS : [];
-            const freshSugs = nextSugs.map(s => ({ ...s, id: `sq-l${nextLevel}-${s.id}-${Date.now()}` }));
-            setSuggestions(freshSugs);
-            setCurrentLevel(nextLevel);
-            setIsAiThinking(false);
+        let fetchedSuggestions = [];
+        try {
+            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+            const res = await fetch(`${apiUrl}/api/ai/suggest-layer`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ complaint, currentLevel: nextLevel })
+            });
+            const data = await res.json();
 
-            // Add the new Zone structurally
-            const prevZoneY = 150 + ((nextLevel - 2) * 500); // previous zone pos
-            const newZoneY = prevZoneY + 500;
+            if (data.success && data.suggestions) {
+                fetchedSuggestions = data.suggestions;
+            } else {
+                throw new Error("Local AI failed to generate suggestions.");
+            }
+        } catch (error) {
+            console.error("Falling back to standard mock arrays due to error:", error);
+            const nextSugs = nextLevel === 1 ? LEVEL_1_SUGGESTIONS : (nextLevel === 2 ? LEVEL_2_SUGGESTIONS : LEVEL_3_SUGGESTIONS);
+            fetchedSuggestions = nextSugs.map(s => ({ ...s, id: `sq-l${nextLevel}-${s.id}-${Date.now()}` }));
+        }
 
-            const newZoneId = `zone-level-${nextLevel}`;
+        setSuggestions(fetchedSuggestions);
+        setCurrentLevel(nextLevel);
+        setIsAiThinking(false);
 
-            setNodes((nds) => [
+        // Add the new Zone structurally
+        const prevZoneY = 150 + ((nextLevel - 2) * 500); // previous zone pos
+        const newZoneY = nextLevel === 1 ? 300 : prevZoneY + 500;
+        const newZoneId = `zone-level-${nextLevel}`;
+
+        setNodes((nds) => {
+            if (nds.some(n => n.id === newZoneId)) return nds; // Already exists
+            return [
                 ...nds,
                 {
                     id: newZoneId,
@@ -205,11 +224,14 @@ const FlowCanvas = () => {
                     selectable: false,
                     zIndex: -1
                 }
-            ]);
+            ]
+        });
 
-            // Add Soft structural edge representing "Context Progressed"
+        // Add Soft structural edge representing "Context Progressed"
+        if (nextLevel > 1) {
             setEdges((eds) => {
-                const prevNodeId = nextLevel === 2 ? 'zone-level-1' : `zone-level-${nextLevel - 1}`;
+                const prevNodeId = `zone-level-${nextLevel - 1}`;
+                if (eds.some(e => e.id === `e-progression-${nextLevel}`)) return eds;
                 return [...eds, {
                     id: `e-progression-${nextLevel}`,
                     source: prevNodeId,
@@ -219,20 +241,20 @@ const FlowCanvas = () => {
                     animated: true
                 }];
             });
+        }
 
-            setTimeout(() => {
-                fitView({ duration: 800, padding: 0.2 });
-            }, 100);
+        setTimeout(() => {
+            fitView({ duration: 800, padding: 0.2 });
+        }, 100);
 
-        }, 1200);
-    }, [setNodes, setEdges, fitView]);
+    }, [complaint, setNodes, setEdges, fitView]);
 
-    const handleStartFlow = () => {
+    const handleStartFlow = async () => {
         if (!complaint.trim()) return;
         setHasStarted(true);
         setCurrentLevel(1);
 
-        // Setup initial structure: Root -> Level 1 Zone
+        // Setup initial structure: Root
         const rootNode = {
             id: 'root-complaint',
             type: 'rootNode',
@@ -241,19 +263,12 @@ const FlowCanvas = () => {
             draggable: false,
         };
 
-        const zone1 = {
-            id: 'zone-level-1',
-            type: 'levelZone',
-            position: { x: window.innerWidth / 2 - 400, y: 300 },
-            data: { level: 1, hasNodes: false, allAnswered: false },
-            draggable: false,
-            selectable: false,
-            zIndex: -1
-        };
+        setNodes([rootNode]);
 
-        setNodes([rootNode, zone1]);
+        // Kick off the AI Request for Level 1 questions!
+        await generateNextLayer(1);
 
-        // Structural downward link
+        // Structural downward link to level 1 generated inside generateNextLayer
         setEdges([{
             id: 'e-progression-1',
             source: 'root-complaint',
@@ -263,7 +278,6 @@ const FlowCanvas = () => {
             animated: true
         }]);
 
-        setSuggestions(LEVEL_1_SUGGESTIONS);
         setTimeout(() => fitView({ duration: 800, padding: 0.2 }), 50);
     };
 

@@ -5,6 +5,7 @@ import authRoutes from './routes/auth';
 import patientRoutes from './routes/patients';
 import protocolRoutes from './routes/protocols';
 import caseRoutes from './routes/cases';
+import aiRoutes from './routes/ai';
 
 dotenv.config();
 
@@ -23,6 +24,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/patients', patientRoutes);
 app.use('/api/protocols', protocolRoutes);
 app.use('/api/cases', caseRoutes);
+app.use('/api/ai', aiRoutes);
 
 // Health check
 app.get('/api/health', (_req, res) => {
