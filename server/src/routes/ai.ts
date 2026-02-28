@@ -19,7 +19,7 @@ router.post('/suggest-layer', async (req, res) => {
 
   try {
     const response = await ollama.chat({
-      model: 'llama3:latest', // using a standard model
+      model: 'jayasimma/healthsoft', // Switched to the specific health model you pulled locally!
       messages: [{ role: 'user', content: prompt }],
       format: 'json'
     });
