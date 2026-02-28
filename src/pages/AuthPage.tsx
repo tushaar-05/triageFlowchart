@@ -169,20 +169,20 @@ const LoginCard: React.FC<{ onLoginSuccess?: () => void }> = ({ onLoginSuccess }
 
       {/* Fields */}
       <div className="space-y-4 mb-6">
-        {/* Email */}
+        {/* ID */}
         <div>
-          <label className="block font-mono text-[10px] text-slate-400 tracking-wider mb-1.5">EMAIL ADDRESS</label>
+          <label className="block font-mono text-[10px] text-slate-400 tracking-wider mb-1.5">CLINICIAN ID</label>
           <div className="relative">
             <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c0 1.306.835 2.417 2 2.83" />
               </svg>
             </div>
             <input
-              type="email"
+              type="text"
               value={email}
               onChange={e => setEmail(e.target.value)}
-              placeholder="clinician@hospital.org"
+              placeholder="e.g. TF-2024-NRS-001"
               className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 bg-white text-[#0F1C14] text-sm placeholder-slate-300 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/10 transition-all"
             />
           </div>
