@@ -207,10 +207,17 @@ AI-assisted node selection
 Standalone executable
 
 14. Team Roles & Responsibilities
-Member Name	  |  Role	                           | Responsibilities
-Tushar Singh  |  Frontend, Backend and Database  | UI, Flowchart Builder SQLite, Electron
-Sai Hrudhay   |  AI Models	                     | AI Integration
-Madhav Agarwal|  FrontEnd	                       | UI, Flowchart Builder
+Member Name: Tushar Singh
+Role: Frontend, Backend and Database
+Responsibilities: UI, Flowchart Builder, SQLite, Electron
+
+Member Name: Sai Hrudhay
+Role: AI Models
+Responsibilities: AI Integration
+
+Member Name: Madhav Agarwal
+Role: Frontend
+Responsibilities: UI, Flowchart Builder
 
 15. Future Scope & Scalability
 # Short-Term
