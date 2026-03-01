@@ -88,4 +88,20 @@ router.post('/suggest-layer', async (req, res) => {
   }
 });
 
+router.post('/generate', async (req, res) => {
+  const { prompt, model, stream, options } = req.body;
+  try {
+    const rawResponse = await fetch(`${ollamaUrl}/api/generate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt, model, stream, options })
+    });
+    const data = await rawResponse.json();
+    res.json(data);
+  } catch (err) {
+    console.error("Ollama proxy error:", err);
+    res.status(500).json({ error: String(err) });
+  }
+});
+
 export default router;

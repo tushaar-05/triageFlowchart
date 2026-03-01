@@ -1,7 +1,8 @@
 export async function callOllama(prompt: string) {
   console.log("🚀 SENDING PROMPT TO OLLAMA:\n", prompt);
 
-  const response = await fetch("http://localhost:11434/api/generate", {
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+  const response = await fetch(`${apiUrl}/api/ai/generate`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
