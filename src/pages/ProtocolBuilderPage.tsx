@@ -295,7 +295,7 @@ const FlowCanvas = () => {
             fitView({ duration: 800, padding: 0.2 });
         }, 100);
 
-    }, [complaint, setNodes, setEdges, fitView]);
+    }, [complaint, setNodes, setEdges, fitView, getNodes]);
 
     const handleStartFlow = async () => {
         if (!complaint.trim()) return;

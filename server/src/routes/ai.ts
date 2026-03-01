@@ -1,9 +1,8 @@
 import { Router } from 'express';
 import Groq from 'groq-sdk';
-import { checkRedFlags } from '../../../src/ai/guardrails'; // Borrow guardrails from shared codebase if accessible, or we can just duplicate it if needed. Actually it's better to just implement the prompt here and let the client do the guardrails, OR put it all here. 
-// Wait, the client already has the guardrail offline! So the server just needs to do the Groq call.
 
 const router = Router();
+const ollamaUrl = process.env.OLLAMA_URL || 'http://localhost:11434';
 
 // Initialize Groq. It automatically picks up process.env.GROQ_API_KEY
 const groq = new Groq({
