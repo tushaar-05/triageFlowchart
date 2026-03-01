@@ -320,26 +320,32 @@ const FlowCanvas = () => {
         setCurrentLevel(nextLevel);
         setIsAiThinking(false);
 
-        // Zone sizing
+        // Zone sizing — use actual estimated card heights
         const nodeCount = fetchedSuggestions.length;
-        const NODE_WIDTH = 310;
-        const GAP = 30;
-        const PADDING = 50; // left/right padding inside zone
-        const totalWidth = Math.max(900, nodeCount * NODE_WIDTH + (nodeCount - 1) * GAP + PADDING * 2);
-        const zoneHeight = Math.max(500, NODE_WIDTH + 200); // tall enough for full card
+        const isFinalLayer = nodeCount === 1 && fetchedSuggestions[0]?.type === 'FINAL DECISION';
+        const NODE_WIDTH = 310;       // card width
+        const CARD_HEIGHT = isFinalLayer ? 280 : 460;  // estimated card height (Final Decision is shorter)
+        const GAP = 30;               // horizontal gap between cards
+        const ZONE_HEADER_H = 60;     // zone header bar height
+        const ZONE_PADDING_BOTTOM = 40;
+        const zoneHeight = ZONE_HEADER_H + CARD_HEIGHT + ZONE_PADDING_BOTTOM;
+        const totalContentWidth = nodeCount * NODE_WIDTH + (nodeCount - 1) * GAP;
+        const totalWidth = Math.max(900, totalContentWidth + 100); // 50px padding each side
 
-        // Zone position — centered on screen, stacked vertically
-        const newZoneY = nextLevel === 1 ? 300 : 300 + (nextLevel - 1) * 620;
+        // Zone position — centered on screen, stacked with consistent spacing
+        const newZoneY = nextLevel === 1 ? 300 : 300 + (nextLevel - 1) * (zoneHeight + 160);
         const newZoneId = `zone-level-${nextLevel}`;
         const zoneX = window.innerWidth / 2 - totalWidth / 2 - 50;
 
-        // Question nodes — positioned inside the zone using zoneX as the anchor
+        // Center nodes horizontally within the zone
+        const nodeStartX = zoneX + (totalWidth - totalContentWidth) / 2;
+
         const newQuestionNodes: Node[] = fetchedSuggestions.map((s: any, i: number) => ({
             id: `node-q-${nextLevel}-${i}-${Date.now()}`,
             type: 'questionNode',
             position: {
-                x: zoneX + PADDING + i * (NODE_WIDTH + GAP),
-                y: newZoneY + 70  // 70px from zone top (after header)
+                x: nodeStartX + i * (NODE_WIDTH + GAP),
+                y: newZoneY + ZONE_HEADER_H + 10
             },
             data: { ...s, level: nextLevel, answered: false },
             draggable: false,
