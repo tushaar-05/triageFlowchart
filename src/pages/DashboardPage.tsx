@@ -3,6 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../lib/db';
 
+const DEMO_PATIENTS = [
+    { name: 'Arjun Mehta', age: '34', gender: 'male', complaint: "I can't hear from my left ear since this morning and it feels blocked." },
+    { name: 'Priya Sharma', age: '28', gender: 'female', complaint: "I have a severe headache on the right side that started 2 hours ago with nausea." },
+    { name: 'Ravi Kumar', age: '55', gender: 'male', complaint: "I'm having chest tightness and shortness of breath when I walk upstairs." },
+    { name: 'Sneha Nair', age: '19', gender: 'female', complaint: "I twisted my ankle while running and now it's swollen and I can't put weight on it." },
+    { name: 'Mohammed Ali', age: '42', gender: 'male', complaint: "I've had a high fever of 39.5°C for 3 days with body aches and no appetite." },
+];
+
 const DashboardPage: React.FC = () => {
     const [isAddPatientModalOpen, setIsAddPatientModalOpen] = useState(false);
     const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -13,6 +21,16 @@ const DashboardPage: React.FC = () => {
     const [gender, setGender] = useState('');
     const [complaint, setComplaint] = useState('');
     const [isSaving, setIsSaving] = useState(false);
+    const [demoIndex, setDemoIndex] = useState(0);
+
+    const fillDemoData = () => {
+        const demo = DEMO_PATIENTS[demoIndex % DEMO_PATIENTS.length];
+        setName(demo.name);
+        setAge(demo.age);
+        setGender(demo.gender);
+        setComplaint(demo.complaint);
+        setDemoIndex(i => i + 1);
+    };
 
     const navigate = useNavigate();
 
@@ -166,7 +184,17 @@ const DashboardPage: React.FC = () => {
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsAddPatientModalOpen(false)}></div>
                     <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg flex flex-col">
-                        <div className="px-6 py-5 border-b border-slate-100"><h3 className="text-xl font-bold">Add New Patient</h3></div>
+                        <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
+                            <h3 className="text-xl font-bold">Add New Patient</h3>
+                            <button
+                                type="button"
+                                onClick={fillDemoData}
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition-colors"
+                            >
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                                Fill Demo
+                            </button>
+                        </div>
                         <div className="p-6 space-y-4">
                             <input value={name} onChange={e => setName(e.target.value)} type="text" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none" placeholder="Full Name" />
                             <div className="grid grid-cols-2 gap-4">
