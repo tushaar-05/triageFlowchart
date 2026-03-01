@@ -38,26 +38,38 @@ const RootNode = ({ data }: any) => {
 };
 
 const LevelZoneNode = ({ data }: any) => {
+    const nodeCount = data.nodeCount || 1;
+    const zoneMinHeight = Math.max(320, nodeCount * 60 + 240);
+    const isCompleted = data.allAnswered;
+
     return (
         <div
-            className="border-2 border-dashed border-slate-300 rounded-2xl bg-slate-50/50 flex flex-col items-center justify-start relative transition-all"
-            style={{ width: Math.max(800, data.width || 800), minHeight: 400 }}
+            className={`border-2 border-dashed rounded-2xl flex flex-col items-center justify-start relative transition-all duration-500 ${isCompleted
+                ? 'border-emerald-300 bg-emerald-50/30'
+                : 'border-slate-300 bg-slate-50/50'
+                }`}
+            style={{ width: Math.max(900, data.width || 900), minHeight: zoneMinHeight }}
         >
             {/* Soft Connector Top */}
             <Handle type="target" position={Position.Top} className="opacity-0" />
 
-            <div className="w-full border-b border-slate-200/60 bg-white/50 py-3 px-6 rounded-t-2xl flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">
-                    Level {data.level} – Add Questions
+            <div className={`w-full border-b py-3 px-6 rounded-t-2xl flex items-center justify-between ${isCompleted ? 'border-emerald-200/60 bg-emerald-50/50' : 'border-slate-200/60 bg-white/50'
+                }`}>
+                <span className={`text-xs font-bold uppercase tracking-widest ${isCompleted ? 'text-emerald-600' : 'text-slate-500'
+                    }`}>
+                    {isCompleted ? '✓ ' : ''}Layer {data.level} — Questions
                 </span>
-                {data.allAnswered && (
-                    <span className="text-[10px] font-bold bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded border border-emerald-100 uppercase tracking-widest">Layer Completed</span>
+                {isCompleted && (
+                    <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-full border border-emerald-200 uppercase tracking-widest flex items-center gap-1">
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                        Layer Completed
+                    </span>
                 )}
             </div>
 
             <div className="flex-1 w-full bg-transparent flex items-center justify-center pointer-events-none">
                 {(!data.hasNodes) && (
-                    <span className="text-slate-400 font-medium text-sm">Drop active factors here...</span>
+                    <span className="text-slate-400 font-medium text-sm">Loading questions...</span>
                 )}
             </div>
 
@@ -70,34 +82,87 @@ const LevelZoneNode = ({ data }: any) => {
 const QuestionNode = ({ data, id }: any) => {
     const [selectedOption, setSelectedOption] = useState<string | null>(data.selectedOption || null);
     const [subjectiveNote, setSubjectiveNote] = useState<string>(data.subjectiveInput || '');
+    const isLocked = data.answered || false;
+    const isFinalDecision = data.type === 'FINAL DECISION';
 
-    // Only track state changes within the component's internal UI feeling
     const handleSelect = (opt: string) => {
+        if (isLocked) return;
         setSelectedOption(opt);
         window.dispatchEvent(new CustomEvent('triage-option-selected', { detail: { option: opt, subjectiveInput: subjectiveNote, nodeId: id, level: data.level } }));
     };
 
     const handleSendNote = (e?: React.MouseEvent | React.KeyboardEvent) => {
-        if (e) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
+        if (isLocked) return;
+        if (e) { e.preventDefault(); e.stopPropagation(); }
         if (!subjectiveNote.trim() && !selectedOption) return;
         const opt = selectedOption || 'Other';
         setSelectedOption(opt);
         window.dispatchEvent(new CustomEvent('triage-option-selected', { detail: { option: opt, subjectiveInput: subjectiveNote, nodeId: id, level: data.level } }));
     };
 
+    // ── FINAL DECISION special card ──
+    if (isFinalDecision) {
+        const lines = data.question?.split('\n') || [];
+        const titleLine = lines[0] || '';
+        const actionLine = lines[1] || '';
+        const reasonLine = lines[2] || '';
+        const riskLevel = titleLine.includes('HIGH') ? 'HIGH' : titleLine.includes('MEDIUM') ? 'MEDIUM' : 'LOW';
+        const riskColor = riskLevel === 'HIGH' ? 'red' : riskLevel === 'MEDIUM' ? 'amber' : 'emerald';
+        const colorMap: Record<string, { bg: string, border: string, text: string, badge: string, badgeText: string }> = {
+            red: { bg: 'bg-red-50', border: 'border-red-300', text: 'text-red-800', badge: 'bg-red-100 border-red-200', badgeText: 'text-red-700' },
+            amber: { bg: 'bg-amber-50', border: 'border-amber-300', text: 'text-amber-800', badge: 'bg-amber-100 border-amber-200', badgeText: 'text-amber-700' },
+            emerald: { bg: 'bg-emerald-50', border: 'border-emerald-300', text: 'text-emerald-800', badge: 'bg-emerald-100 border-emerald-200', badgeText: 'text-emerald-700' },
+        };
+        const c = colorMap[riskColor];
+        return (
+            <div className={`${c.bg} border-2 ${c.border} rounded-2xl w-[380px] shadow-lg overflow-hidden`}>
+                <div className={`px-5 py-3 border-b ${c.border} flex items-center justify-between`}>
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+                        <svg className="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        Final Decision
+                    </span>
+                    <span className={`text-[10px] font-black px-2.5 py-1 rounded-full border uppercase tracking-widest ${c.badge} ${c.badgeText}`}>{riskLevel} RISK</span>
+                </div>
+                <div className="p-5 flex flex-col gap-3">
+                    <div className="flex flex-col gap-1.5">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Recommended Action</span>
+                        <p className={`text-sm font-bold ${c.text} leading-snug`}>{actionLine.replace('Action: ', '')}</p>
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Clinical Reason</span>
+                        <p className="text-xs text-slate-600 leading-relaxed">{reasonLine.replace('Reason: ', '')}</p>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleSelect('Complete Triage'); }}
+                        className={`nodrag mt-2 w-full py-2.5 rounded-xl text-sm font-bold border-2 transition-all ${isLocked
+                            ? 'bg-emerald-100 border-emerald-300 text-emerald-700 cursor-default'
+                            : `${c.bg} ${c.border} ${c.text} hover:opacity-80 active:scale-[0.98]`
+                            }`}
+                    >
+                        {isLocked ? '✓ Triage Completed' : 'Complete Triage'}
+                    </button>
+                </div>
+                <Handle type="target" position={Position.Top} className="opacity-0 w-0 h-0" />
+                <Handle type="source" position={Position.Bottom} className="opacity-0 w-0 h-0" />
+            </div>
+        );
+    }
+
     return (
-        <div className={`bg-white border-2 rounded-2xl w-[320px] flex flex-col transition-all hover:shadow-lg ${selectedOption ? 'border-indigo-400 shadow-md ring-4 ring-indigo-50' : 'border-slate-200 shadow-sm hover:border-slate-300'}`}>
-            <div className={`p-4 border-b rounded-t-2xl ${selectedOption ? 'bg-indigo-50/50 border-indigo-100' : 'bg-gradient-to-b from-slate-50 to-white border-slate-100'}`}>
-                <div className="flex justify-between items-start mb-3">
+        <div className={`bg-white border-2 rounded-2xl w-[300px] flex flex-col transition-all ${isLocked
+            ? 'border-indigo-300 shadow-sm ring-2 ring-indigo-100 opacity-90'
+            : 'border-slate-200 shadow-sm hover:shadow-md hover:border-slate-300'
+            }`}>
+            <div className={`p-3.5 border-b rounded-t-2xl ${isLocked ? 'bg-indigo-50/60 border-indigo-100' : 'bg-gradient-to-b from-slate-50 to-white border-slate-100'
+                }`}>
+                <div className="flex justify-between items-start mb-2">
                     <span className="flex items-center gap-1.5 text-[10px] font-bold text-indigo-500 uppercase tracking-wider">
                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                         AI Question
                     </span>
                     <div className="flex items-center gap-2">
-                        {selectedOption && (
+                        {isLocked && (
                             <span className="text-[10px] font-bold text-emerald-500 flex items-center gap-1 uppercase tracking-wider">
                                 <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                                 Answered
@@ -106,19 +171,19 @@ const QuestionNode = ({ data, id }: any) => {
                         <span className="text-[10px] font-bold bg-slate-100 border border-slate-200 text-slate-500 px-2 py-0.5 rounded uppercase tracking-wider">{data.type}</span>
                     </div>
                 </div>
-                <div className="text-[15px] font-bold text-slate-800 leading-snug">{data.question}</div>
+                <div className="text-[13px] font-bold text-slate-800 leading-snug">{data.question}</div>
             </div>
 
-            <div className="p-4 flex flex-col gap-4">
-                <div className="flex gap-2.5 flex-wrap">
+            <div className={`p-3.5 flex flex-col gap-3 ${isLocked ? 'pointer-events-none' : ''}`}>
+                <div className="flex gap-2 flex-wrap">
                     {data.options?.map((opt: string) => (
                         <button
                             type="button"
                             key={opt}
                             onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleSelect(opt); }}
-                            className={`nodrag flex-1 py-2 px-3 border rounded-lg text-xs font-bold transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 active:scale-[0.98] ${selectedOption === opt
+                            className={`nodrag flex-1 py-1.5 px-2.5 border rounded-lg text-xs font-bold transition-all focus:outline-none ${selectedOption === opt
                                 ? 'bg-indigo-50 border-indigo-500 text-indigo-700 ring-2 ring-indigo-500/20'
-                                : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 hover:text-slate-900'
+                                : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300'
                                 }`}
                         >
                             {opt}
@@ -127,39 +192,30 @@ const QuestionNode = ({ data, id }: any) => {
                 </div>
 
                 <div className="pt-2 border-t border-slate-100">
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 flex justify-between">
-                        Subjective Notes
-                    </label>
-                    <div className="flex flex-col gap-2">
-                        <textarea
-                            className="nodrag w-full text-xs p-3 border border-slate-200 rounded-lg bg-slate-50 resize-none outline-none focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all text-slate-700 placeholder:text-slate-400 shadow-inner"
-                            placeholder="Type an answer or context here..."
-                            rows={2}
-                            value={subjectiveNote}
-                            onChange={(e) => setSubjectiveNote(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter' && !e.shiftKey) {
-                                    handleSendNote(e);
-                                }
-                            }}
-                        />
-                        {!selectedOption && (
-                            <div className="flex justify-end nodrag">
-                                <button
-                                    type="button"
-                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleSendNote(); }}
-                                    disabled={!subjectiveNote.trim()}
-                                    className="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-md text-[10px] font-bold uppercase tracking-wider hover:bg-indigo-100 transition-colors disabled:opacity-50 flex items-center gap-1 border border-indigo-200"
-                                >
-                                    <span>Submit</span>
-                                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
-                                </button>
-                            </div>
-                        )}
-                    </div>
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Subjective Notes</label>
+                    <textarea
+                        className="nodrag w-full text-xs p-2.5 border border-slate-200 rounded-lg bg-slate-50 resize-none outline-none focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all text-slate-700 placeholder:text-slate-400"
+                        placeholder="Type an answer or context here..."
+                        rows={2}
+                        value={subjectiveNote}
+                        onChange={(e) => setSubjectiveNote(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) handleSendNote(e); }}
+                        disabled={isLocked}
+                    />
+                    {!isLocked && !selectedOption && (
+                        <div className="flex justify-end mt-1.5 nodrag">
+                            <button
+                                type="button"
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleSendNote(); }}
+                                disabled={!subjectiveNote.trim()}
+                                className="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-md text-[10px] font-bold uppercase tracking-wider hover:bg-indigo-100 transition-colors disabled:opacity-40 flex items-center gap-1 border border-indigo-200"
+                            >
+                                Submit
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
-            {/* Invisible handles just to satisfy React Flow's engine internally if needed */}
             <Handle type="target" position={Position.Top} className="opacity-0 w-0 h-0" />
             <Handle type="source" position={Position.Bottom} className="opacity-0 w-0 h-0" />
         </div>
@@ -262,25 +318,40 @@ const FlowCanvas = () => {
         setCurrentLevel(nextLevel);
         setIsAiThinking(false);
 
-        // Add the new Zone structurally
-        const prevZoneY = 150 + ((nextLevel - 2) * 500); // previous zone pos
-        const newZoneY = nextLevel === 1 ? 300 : prevZoneY + 500;
+        // Zone sizing — each node is ~380px tall, add 120px for zone header + padding
+        const nodeCount = fetchedSuggestions.length;
+        const zoneHeight = Math.max(380, nodeCount * 60 + 280);
+
+        // Add the new Zone structurally — spacing = 600px between zones
+        const newZoneY = nextLevel === 1 ? 300 : 300 + (nextLevel - 1) * 620;
         const newZoneId = `zone-level-${nextLevel}`;
+
+        // Horizontal layout: center nodes inside the zone
+        const NODE_SPACING = 340;
+        const totalWidth = Math.max(900, nodeCount * NODE_SPACING + 80);
+
+        const newQuestionNodes: Node[] = fetchedSuggestions.map((s: any, i: number) => ({
+            id: `node-q-${nextLevel}-${i}-${Date.now()}`,
+            type: 'questionNode',
+            position: { x: (window.innerWidth / 2 - 450) + (i * NODE_SPACING) + (totalWidth / 2 - (nodeCount * NODE_SPACING) / 2), y: newZoneY + 80 },
+            data: { ...s, level: nextLevel, answered: false },
+            draggable: false,
+            zIndex: 10
+        }));
 
         setNodes((nds) => {
             if (nds.some(n => n.id === newZoneId)) return nds; // Already exists
-            return [
-                ...nds,
-                {
-                    id: newZoneId,
-                    type: 'levelZone',
-                    position: { x: window.innerWidth / 2 - 400, y: newZoneY },
-                    data: { level: nextLevel, hasNodes: false, allAnswered: false },
-                    draggable: false,
-                    selectable: false,
-                    zIndex: -1
-                }
-            ]
+            const zoneNode: Node = {
+                id: newZoneId,
+                type: 'levelZone',
+                position: { x: window.innerWidth / 2 - totalWidth / 2 - 50, y: newZoneY },
+                data: { level: nextLevel, hasNodes: nodeCount > 0, allAnswered: false, nodeCount, width: totalWidth },
+                style: { width: totalWidth, minHeight: zoneHeight },
+                draggable: false,
+                selectable: false,
+                zIndex: -1
+            };
+            return [...nds, zoneNode, ...newQuestionNodes];
         });
 
         // Add Soft structural edge representing "Context Progressed"
@@ -361,9 +432,13 @@ const FlowCanvas = () => {
 
                 if (nodesInLevel.length > 0 && allAnswered && level === currentLevel) {
 
-                    // Mark the zone as fully completed visually
+                    // Mark the zone as fully completed visually and LOCK all nodes in this level
                     setNodes((nds) => nds.map(n => {
                         if (n.id === `zone-level-${level}`) return { ...n, data: { ...n.data, allAnswered: true } };
+                        // Lock answered nodes so they can't be moved
+                        if (n.type === 'questionNode' && n.data.level === level) {
+                            return { ...n, draggable: false, selectable: false, data: { ...n.data, answered: true } };
+                        }
                         return n;
                     }));
 
