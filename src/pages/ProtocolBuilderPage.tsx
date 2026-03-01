@@ -349,6 +349,7 @@ const FlowCanvas = () => {
                 const allCurrentNodes = getNodes();
                 const nodesInLevel = allCurrentNodes.filter(n => n.type === 'questionNode' && n.data.level === level);
                 const allAnswered = nodesInLevel.every(n => n.data.answered);
+                const hasFinalDecision = nodesInLevel.some(n => n.data.type === 'FINAL DECISION');
 
                 if (nodesInLevel.length > 0 && allAnswered && level === currentLevel) {
 
@@ -358,9 +359,7 @@ const FlowCanvas = () => {
                         return n;
                     }));
 
-                    // Stop progressing if we hit the final clinical decision
-                    const hasFinalDecision = nodesInLevel.some(n => n.data.type === 'FINAL DECISION');
-
+                    // AI progresses structurally until a final decision is reached (up to an arbitrary safety limit)
                     if (!hasFinalDecision && level < 15) {
                         generateNextLayer(level + 1);
                     }
