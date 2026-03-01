@@ -22,17 +22,17 @@ interface ProtocolBuilderPageProps {
 
 const RootNode = ({ data }: any) => {
     return (
-        <div className="bg-slate-800 border-2 border-slate-900 rounded-2xl max-w-[280px] w-72 shadow-lg overflow-hidden">
-            <div className="bg-slate-900/50 px-4 py-3 flex items-center gap-2">
-                <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]"></div>
-                <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Patient Complaint (Root)</span>
+        <div className="bg-indigo-900/40 border border-indigo-500/30 rounded-2xl max-w-[280px] w-72 shadow-[0_0_20px_rgba(99,102,241,0.15)] overflow-hidden backdrop-blur-md">
+            <div className="bg-indigo-950/50 px-4 py-3 flex items-center gap-2 border-b border-indigo-500/20">
+                <div className="w-2 h-2 rounded-full bg-teal-400 shadow-[0_0_8px_rgba(45,212,191,0.8)] animate-pulse"></div>
+                <span className="text-[10px] font-bold text-indigo-300 uppercase tracking-widest">Patient Complaint</span>
             </div>
             <div className="p-5">
-                <p className="text-sm font-medium text-slate-100 italic leading-relaxed">
+                <p className="text-sm font-medium text-slate-200 italic leading-relaxed">
                     "{data.complaint}"
                 </p>
             </div>
-            <Handle type="source" position={Position.Bottom} className="w-3.5 h-3.5 bg-slate-800 border-2 border-slate-300 shadow-sm opacity-0" />
+            <Handle type="source" position={Position.Bottom} className="w-3.5 h-3.5 bg-indigo-500 border-none shadow-sm opacity-0" />
         </div>
     );
 };
@@ -44,23 +44,23 @@ const LevelZoneNode = ({ data }: any) => {
 
     return (
         <div
-            className={`border-2 border-dashed rounded-2xl flex flex-col items-center justify-start relative transition-all duration-500 ${isCompleted
-                ? 'border-emerald-300 bg-emerald-50/30'
-                : 'border-slate-300 bg-slate-50/50'
+            className={`border border-dashed rounded-3xl flex flex-col items-center justify-start relative transition-all duration-700 backdrop-blur-sm ${isCompleted
+                ? 'border-teal-500/30 bg-teal-500/5'
+                : 'border-white/10 bg-white/5 shadow-[inset_0_0_20px_rgba(255,255,255,0.02)]'
                 }`}
             style={{ width: Math.max(900, data.width || 900), minHeight: zoneMinHeight }}
         >
             {/* Soft Connector Top */}
             <Handle type="target" position={Position.Top} className="opacity-0" />
 
-            <div className={`w-full border-b py-3 px-6 rounded-t-2xl flex items-center justify-between ${isCompleted ? 'border-emerald-200/60 bg-emerald-50/50' : 'border-slate-200/60 bg-white/50'
+            <div className={`w-full border-b py-3 px-6 rounded-t-3xl flex items-center justify-between transition-colors duration-500 ${isCompleted ? 'border-teal-500/20 bg-teal-500/10' : 'border-white/10 bg-white/5'
                 }`}>
-                <span className={`text-xs font-bold uppercase tracking-widest ${isCompleted ? 'text-emerald-600' : 'text-slate-500'
+                <span className={`text-xs font-bold uppercase tracking-widest ${isCompleted ? 'text-teal-400' : 'text-slate-400'
                     }`}>
-                    {isCompleted ? '✓ ' : ''}Layer {data.level} — Questions
+                    {isCompleted ? '✓ ' : ''}Layer {data.level} — Diagnostic Matrix
                 </span>
                 {isCompleted && (
-                    <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-full border border-emerald-200 uppercase tracking-widest flex items-center gap-1">
+                    <span className="text-[10px] font-bold bg-teal-500/10 text-teal-400 px-2.5 py-1 rounded-full border border-teal-500/20 uppercase tracking-widest flex items-center gap-1 shadow-[0_0_10px_rgba(45,212,191,0.2)]">
                         <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                         Layer Completed
                     </span>
@@ -69,7 +69,10 @@ const LevelZoneNode = ({ data }: any) => {
 
             <div className="flex-1 w-full bg-transparent flex items-center justify-center pointer-events-none">
                 {(!data.hasNodes) && (
-                    <span className="text-slate-400 font-medium text-sm">Loading questions...</span>
+                    <div className="flex flex-col items-center gap-3">
+                        <div className="w-6 h-6 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin"></div>
+                        <span className="text-indigo-400 font-bold text-xs uppercase tracking-widest animate-pulse">Generating Matrix...</span>
+                    </div>
                 )}
             </div>
 
@@ -108,16 +111,16 @@ const QuestionNode = ({ data, id }: any) => {
         const reasonLine = lines[2] || '';
         const riskLevel = titleLine.includes('HIGH') ? 'HIGH' : titleLine.includes('MEDIUM') ? 'MEDIUM' : 'LOW';
         const riskColor = riskLevel === 'HIGH' ? 'red' : riskLevel === 'MEDIUM' ? 'amber' : 'emerald';
-        const colorMap: Record<string, { bg: string, border: string, text: string, badge: string, badgeText: string }> = {
-            red: { bg: 'bg-red-50', border: 'border-red-300', text: 'text-red-800', badge: 'bg-red-100 border-red-200', badgeText: 'text-red-700' },
-            amber: { bg: 'bg-amber-50', border: 'border-amber-300', text: 'text-amber-800', badge: 'bg-amber-100 border-amber-200', badgeText: 'text-amber-700' },
-            emerald: { bg: 'bg-emerald-50', border: 'border-emerald-300', text: 'text-emerald-800', badge: 'bg-emerald-100 border-emerald-200', badgeText: 'text-emerald-700' },
+        const colorMap: Record<string, { bg: string, border: string, text: string, badge: string, badgeText: string, glow: string }> = {
+            red: { bg: 'bg-rose-950/40', border: 'border-rose-500/30', text: 'text-rose-300', badge: 'bg-rose-500/10 border-rose-500/20', badgeText: 'text-rose-400', glow: 'shadow-[0_0_20px_rgba(244,63,94,0.15)]' },
+            amber: { bg: 'bg-amber-950/40', border: 'border-amber-500/30', text: 'text-amber-300', badge: 'bg-amber-500/10 border-amber-500/20', badgeText: 'text-amber-400', glow: 'shadow-[0_0_20px_rgba(245,158,11,0.15)]' },
+            emerald: { bg: 'bg-emerald-950/40', border: 'border-emerald-500/30', text: 'text-emerald-300', badge: 'bg-emerald-500/10 border-emerald-500/20', badgeText: 'text-emerald-400', glow: 'shadow-[0_0_20px_rgba(16,185,129,0.15)]' },
         };
         const c = colorMap[riskColor];
         return (
-            <div className={`${c.bg} border-2 ${c.border} rounded-2xl w-[380px] shadow-lg overflow-hidden`}>
-                <div className={`px-5 py-3 border-b ${c.border} flex items-center justify-between`}>
-                    <span className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+            <div className={`${c.bg} border ${c.border} rounded-2xl w-[380px] overflow-hidden backdrop-blur-md ${c.glow}`}>
+                <div className={`px-5 py-3 border-b ${c.border} flex items-center justify-between bg-black/20`}>
+                    <span className="text-xs font-bold text-slate-300 uppercase tracking-widest flex items-center gap-1.5">
                         <svg className="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                         Final Decision
                     </span>
@@ -130,51 +133,51 @@ const QuestionNode = ({ data, id }: any) => {
                     </div>
                     <div className="flex flex-col gap-1.5">
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Clinical Reason</span>
-                        <p className="text-xs text-slate-600 leading-relaxed">{reasonLine.replace('Reason: ', '')}</p>
+                        <p className="text-xs text-slate-400 leading-relaxed">{reasonLine.replace('Reason: ', '')}</p>
                     </div>
                     <button
                         type="button"
                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleSelect('Complete Triage'); }}
-                        className={`nodrag mt-2 w-full py-2.5 rounded-xl text-sm font-bold border-2 transition-all ${isLocked
-                            ? 'bg-emerald-100 border-emerald-300 text-emerald-700 cursor-default'
-                            : `${c.bg} ${c.border} ${c.text} hover:opacity-80 active:scale-[0.98]`
+                        className={`nodrag mt-2 w-full py-2.5 rounded-xl text-sm font-bold transition-all border ${isLocked
+                            ? 'bg-teal-500/10 border-teal-500/20 text-teal-400 cursor-default'
+                            : 'bg-transparent border-white/20 text-white hover:bg-white/5 active:scale-[0.98]'
                             }`}
                     >
-                        {isLocked ? '✓ Triage Completed' : 'Complete Triage'}
+                        {isLocked ? '✓ Triage Flow Finalized' : 'Finalize Flow'}
                     </button>
                 </div>
                 <Handle type="target" position={Position.Top} className="opacity-0 w-0 h-0" />
                 <Handle type="source" position={Position.Bottom} className="opacity-0 w-0 h-0" />
-            </div>
+            </div >
         );
     }
 
     return (
-        <div className={`bg-white border-2 rounded-2xl w-[300px] flex flex-col transition-all ${isLocked
-            ? 'border-indigo-300 shadow-sm ring-2 ring-indigo-100 opacity-90'
-            : 'border-slate-200 shadow-sm hover:shadow-md hover:border-slate-300'
+        <div className={`bg-[#131A2A]/90 backdrop-blur-md border rounded-2xl w-[300px] flex flex-col transition-all duration-300 ${isLocked
+            ? 'border-indigo-500/40 shadow-[0_0_15px_rgba(99,102,241,0.1)] opacity-95 ring-1 ring-indigo-500/20'
+            : 'border-white/10 shadow-xl hover:border-indigo-400/50 hover:shadow-[0_0_20px_rgba(99,102,241,0.1)]'
             }`}>
-            <div className={`p-3.5 border-b rounded-t-2xl ${isLocked ? 'bg-indigo-50/60 border-indigo-100' : 'bg-gradient-to-b from-slate-50 to-white border-slate-100'
+            <div className={`p-4 border-b rounded-t-2xl ${isLocked ? 'bg-indigo-500/10 border-indigo-500/20' : 'bg-white/5 border-white/10'
                 }`}>
                 <div className="flex justify-between items-start mb-2">
-                    <span className="flex items-center gap-1.5 text-[10px] font-bold text-indigo-500 uppercase tracking-wider">
+                    <span className="flex items-center gap-1.5 text-[10px] font-bold text-indigo-400 uppercase tracking-wider">
                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                         AI Question
                     </span>
                     <div className="flex items-center gap-2">
                         {isLocked && (
-                            <span className="text-[10px] font-bold text-emerald-500 flex items-center gap-1 uppercase tracking-wider">
+                            <span className="text-[10px] font-bold text-teal-400 flex items-center gap-1 uppercase tracking-wider">
                                 <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                                 Answered
                             </span>
                         )}
-                        <span className="text-[10px] font-bold bg-slate-100 border border-slate-200 text-slate-500 px-2 py-0.5 rounded uppercase tracking-wider">{data.type}</span>
+                        <span className="text-[9px] font-bold bg-white/5 border border-white/10 text-slate-400 px-2 py-0.5 rounded uppercase tracking-wider">{data.type}</span>
                     </div>
                 </div>
-                <div className="text-[13px] font-bold text-slate-800 leading-snug">{data.question}</div>
+                <div className="text-[13px] font-bold text-slate-200 leading-snug">{data.question}</div>
             </div>
 
-            <div className={`p-3.5 flex flex-col gap-3 ${isLocked ? 'pointer-events-none' : ''}`}>
+            <div className={`p-4 flex flex-col gap-3 ${isLocked ? 'pointer-events-none' : ''}`}>
                 <div className="flex gap-2 flex-wrap">
                     {data.options?.map((opt: string) => (
                         <button
@@ -182,8 +185,8 @@ const QuestionNode = ({ data, id }: any) => {
                             key={opt}
                             onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleSelect(opt); }}
                             className={`nodrag flex-1 py-1.5 px-2.5 border rounded-lg text-xs font-bold transition-all focus:outline-none ${selectedOption === opt
-                                ? 'bg-indigo-50 border-indigo-500 text-indigo-700 ring-2 ring-indigo-500/20'
-                                : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300'
+                                ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-300 ring-1 ring-indigo-400/30'
+                                : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:border-white/20'
                                 }`}
                         >
                             {opt}
@@ -191,10 +194,10 @@ const QuestionNode = ({ data, id }: any) => {
                     ))}
                 </div>
 
-                <div className="pt-2 border-t border-slate-100">
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Subjective Notes</label>
+                <div className="pt-3 border-t border-white/5">
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Subjective Notes</label>
                     <textarea
-                        className="nodrag w-full text-xs p-2.5 border border-slate-200 rounded-lg bg-slate-50 resize-none outline-none focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all text-slate-700 placeholder:text-slate-400"
+                        className="nodrag w-full text-xs p-3 border border-white/10 rounded-xl bg-black/20 resize-none outline-none focus:bg-black/40 focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/30 transition-all text-slate-200 placeholder:text-slate-600"
                         placeholder="Type an answer or context here..."
                         rows={2}
                         value={subjectiveNote}
@@ -203,12 +206,12 @@ const QuestionNode = ({ data, id }: any) => {
                         disabled={isLocked}
                     />
                     {!isLocked && !selectedOption && (
-                        <div className="flex justify-end mt-1.5 nodrag">
+                        <div className="flex justify-end mt-2 nodrag">
                             <button
                                 type="button"
                                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleSendNote(); }}
                                 disabled={!subjectiveNote.trim()}
-                                className="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-md text-[10px] font-bold uppercase tracking-wider hover:bg-indigo-100 transition-colors disabled:opacity-40 flex items-center gap-1 border border-indigo-200"
+                                className="px-3 py-1.5 bg-indigo-500/20 text-indigo-300 rounded-lg text-[10px] font-bold uppercase tracking-wider hover:bg-indigo-500/30 transition-colors disabled:opacity-40 flex items-center gap-1 border border-indigo-500/30"
                             >
                                 Submit
                             </button>
@@ -574,18 +577,18 @@ const FlowCanvas = () => {
     );
 
     return (
-        <div className="flex-1 flex flex-col h-full bg-[#FAFAFA] relative overflow-hidden">
+        <div className="flex-1 flex flex-col h-full bg-[#0B0F19] relative overflow-hidden">
 
             {/* 1. Root Input Section */}
-            <div className="p-6 border-b border-slate-200 bg-white shrink-0 shadow-sm z-30 relative">
+            <div className="p-6 border-b border-white/10 bg-[#0B0F19]/80 backdrop-blur-xl shrink-0 shadow-sm z-30 relative">
                 <div className="max-w-4xl mx-auto flex flex-col sm:flex-row gap-4">
                     <div className="flex-1">
-                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-2">
+                        <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-2">
                             What is the patient saying?
                         </label>
                         <input
                             type="text"
-                            className={`w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-slate-800 font-medium transition-all shadow-inner ${hasStarted ? 'opacity-60 bg-slate-100 cursor-not-allowed text-slate-500' : 'focus:ring-2 focus:ring-teal-600/20 focus:border-teal-600'}`}
+                            className={`w-full px-5 py-3.5 bg-black/20 border border-white/10 rounded-xl outline-none text-white font-medium transition-all shadow-inner placeholder:text-slate-600 ${hasStarted ? 'opacity-50 cursor-not-allowed' : 'focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500/50'}`}
                             placeholder="e.g., I have severe chest pain that started an hour ago..."
                             value={complaint}
                             onChange={(e) => setComplaint(e.target.value)}
@@ -598,7 +601,7 @@ const FlowCanvas = () => {
                             <button
                                 onClick={handleStartFlow}
                                 disabled={!complaint.trim()}
-                                className="w-full sm:w-auto px-8 py-3.5 bg-teal-600 text-white font-bold rounded-xl hover:bg-teal-700 transition flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed shadow-md focus:ring-4 focus:ring-teal-600/30"
+                                className="w-full sm:w-auto px-8 py-3.5 bg-teal-500/20 text-teal-300 border border-teal-500/50 font-bold rounded-xl hover:bg-teal-500/30 transition-all flex-shrink-0 disabled:opacity-30 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(20,184,166,0.15)] focus:ring-2 focus:ring-teal-500/50"
                             >
                                 Start Triage
                             </button>
@@ -609,14 +612,14 @@ const FlowCanvas = () => {
                                         window.localStorage.removeItem('triageFlowState');
                                         setHasStarted(false); setNodes([]); setEdges([]); setComplaint('');
                                     }}
-                                    className="px-4 py-3.5 bg-white border border-slate-200 text-slate-400 font-bold rounded-xl hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition shadow-sm flex-shrink-0"
-                                    title="Reset Flowchart"
+                                    className="px-4 py-3.5 bg-white/5 border border-white/10 text-slate-400 font-bold rounded-xl hover:bg-rose-500/10 hover:text-rose-400 hover:border-rose-500/30 transition-all shadow-sm flex-shrink-0"
+                                    title="Reset Matrix"
                                 >
                                     <svg className="w-5 h-5 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                                 </button>
                                 <button
                                     onClick={handleExportJSON}
-                                    className="w-full sm:w-auto px-6 py-3.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition shadow-sm flex items-center gap-2"
+                                    className="w-full sm:w-auto px-6 py-3.5 bg-indigo-500/20 border border-indigo-500/50 text-indigo-300 font-bold rounded-xl hover:bg-indigo-500/30 transition-all shadow-[0_0_15px_rgba(99,102,241,0.15)] flex items-center gap-2"
                                 >
                                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
                                     Export JSON
@@ -629,10 +632,10 @@ const FlowCanvas = () => {
 
             {/* 2. AI Thinking Status Bar — only visible while AI is generating */}
             {hasStarted && isAiThinking && (
-                <div className="bg-indigo-50 border-b border-indigo-100 px-6 py-3 shrink-0 z-20 flex items-center gap-3">
-                    <div className="w-4 h-4 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin shrink-0"></div>
-                    <span className="text-xs font-bold text-indigo-600 uppercase tracking-widest">
-                        AI is generating Layer {currentLevel} questions...
+                <div className="bg-indigo-500/10 backdrop-blur-md border-b border-white/10 px-6 py-3 shrink-0 z-20 flex items-center gap-3">
+                    <div className="w-4 h-4 rounded-full border-2 border-indigo-400 border-t-transparent animate-spin shrink-0"></div>
+                    <span className="text-xs font-bold text-indigo-400 uppercase tracking-widest shadow-[0_0_10px_rgba(99,102,241,0.2)]">
+                        DeepSeek Reasoning Model: Generating Matrix Layer {currentLevel}...
                     </span>
                 </div>
             )}
@@ -655,19 +658,23 @@ const FlowCanvas = () => {
                         maxZoom={1.5}
                         proOptions={{ hideAttribution: true }}
                     >
-                        <Background color="#cbd5e1" gap={20} size={1.5} />
-                        <Controls className="fill-slate-600 shadow-sm border-slate-200 rounded-lg overflow-hidden" showInteractive={false} />
+                        <Background color="#ffffff20" gap={20} size={1.5} />
+                        <Controls className="fill-slate-300 shadow-sm border-white/10 bg-[#131A2A]/50 backdrop-blur-sm rounded-lg overflow-hidden" showInteractive={false} />
                     </ReactFlow>
                 ) : (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-transparent pointer-events-none p-6">
-                        <div className="w-24 h-24 rounded-full bg-teal-50 flex items-center justify-center mb-6">
-                            <svg className="w-10 h-10 text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-transparent pointer-events-none p-6 z-0">
+                        {/* ── Background Glow Effects ── */}
+                        <div className="absolute top-[20%] left-[20%] w-[300px] h-[300px] bg-indigo-600/10 blur-[100px] rounded-full mix-blend-screen"></div>
+                        <div className="absolute bottom-[20%] right-[20%] w-[400px] h-[400px] bg-teal-600/10 blur-[120px] rounded-full mix-blend-screen"></div>
+
+                        <div className="w-24 h-24 rounded-full bg-teal-500/10 border border-teal-500/20 flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(45,212,191,0.1)]">
+                            <svg className="w-10 h-10 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                             </svg>
                         </div>
-                        <h2 className="text-2xl font-bold text-slate-700 tracking-tight">AI-Assisted Assessment Ready</h2>
-                        <p className="text-slate-500 mt-2 max-w-sm text-center">
-                            Awaiting root symptom declaration above to map triage layer structure.
+                        <h2 className="text-3xl font-black text-white tracking-tight mb-2">A.I. Diagnostic Matrix Ready</h2>
+                        <p className="text-slate-400 max-w-sm text-center font-medium">
+                            Awaiting initial symptom manifestation. Enter chief complaint to map structural pathways.
                         </p>
                     </div>
                 )}
@@ -681,28 +688,28 @@ const FlowCanvas = () => {
 
 const TriageCanvasPage: React.FC<ProtocolBuilderPageProps> = ({ onBack }) => {
     return (
-        <div className="h-screen bg-slate-50 font-sans text-slate-900 pt-16 pl-0 md:pl-64 flex flex-col overflow-hidden">
-            {/* Nav Headers (Remains the Same) */}
-            <header className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-40 shadow-sm shadow-slate-200/50">
+        <div className="h-screen bg-[#0B0F19] text-slate-200 font-sans pt-16 pl-0 md:pl-64 flex flex-col overflow-hidden selection:bg-indigo-500/30">
+            {/* Nav Headers */}
+            <header className="fixed top-0 left-0 right-0 h-16 bg-white/5 border-b border-white/10 flex items-center justify-between px-6 z-40 backdrop-blur-md shadow-sm">
                 <div className="flex items-center gap-4">
                     <button
                         onClick={onBack}
-                        className="flex items-center gap-2 p-1.5 -ml-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors group focus:outline-none focus:ring-2 focus:ring-slate-200"
+                        className="flex items-center gap-2 p-1.5 -ml-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors group focus:outline-none focus:ring-2 focus:ring-slate-500/50"
                         title="Back to Dashboard"
                     >
                         <svg className="w-5 h-5 transition-transform group-hover:-translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                         </svg>
-                        <span className="font-bold text-sm hidden sm:inline">Back</span>
+                        <span className="font-bold text-sm hidden sm:inline">Command Center</span>
                     </button>
-                    <div className="h-5 w-px bg-slate-200"></div>
-                    <span className="font-bold text-lg text-slate-800 tracking-tight flex items-center gap-2">
-                        TriageFlow AI
+                    <div className="h-5 w-px bg-white/10"></div>
+                    <span className="font-bold text-lg text-white tracking-tight flex items-center gap-2">
+                        TriageFlow<span className="text-indigo-400">AI</span>
                     </span>
                 </div>
                 <div className="flex items-center gap-4">
-                    <div className="px-3 py-1.5 bg-indigo-50 border border-indigo-100 rounded-lg">
-                        <span className="text-[11px] font-bold text-indigo-700 uppercase tracking-widest flex items-center gap-1.5">
+                    <div className="px-3 py-1.5 bg-indigo-500/10 border border-indigo-500/20 rounded-lg shadow-[0_0_10px_rgba(99,102,241,0.1)]">
+                        <span className="text-[11px] font-bold text-indigo-400 uppercase tracking-widest flex items-center gap-1.5">
                             <span className="relative flex h-2 w-2">
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
                                 <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
@@ -713,15 +720,15 @@ const TriageCanvasPage: React.FC<ProtocolBuilderPageProps> = ({ onBack }) => {
                 </div>
             </header>
 
-            <aside className="fixed top-16 left-0 bottom-0 w-64 bg-white border-r border-slate-200 hidden md:flex flex-col pt-8 z-30">
+            <aside className="fixed top-16 left-0 bottom-0 w-64 bg-white/5 border-r border-white/10 hidden md:flex flex-col pt-8 z-30 backdrop-blur-md">
                 <nav className="flex-1 px-4 space-y-2">
-                    <a href="#" onClick={(e) => { e.preventDefault(); if (onBack) onBack(); }} className="flex items-center gap-3 px-3 py-2.5 text-slate-500 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-colors">
+                    <a href="#" onClick={(e) => { e.preventDefault(); if (onBack) onBack(); }} className="flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                         </svg>
-                        <span className="font-medium text-sm">Dashboard</span>
+                        <span className="font-medium text-sm">Command Center</span>
                     </a>
-                    <a href="#" className="flex items-center gap-3 px-3 py-2.5 bg-indigo-50 text-indigo-700 rounded-lg border border-indigo-100">
+                    <a href="#" className="flex items-center gap-3 px-3 py-2.5 bg-indigo-500/10 text-indigo-300 rounded-lg border border-indigo-500/20">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
                         </svg>
@@ -739,8 +746,8 @@ const TriageCanvasPage: React.FC<ProtocolBuilderPageProps> = ({ onBack }) => {
                 __html: `
                 .custom-scrollbar::-webkit-scrollbar { height: 8px; }
                 .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-                .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; border: 2px solid #f1f5f9; }
-                .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+                .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; border: 2px solid #0B0F19; }
+                .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #475569; }
             `}} />
         </div>
     );
