@@ -149,7 +149,7 @@ const DashboardPage: React.FC = () => {
                 </div>
 
                 <div className="max-w-2xl w-full mx-auto md:mx-0 mt-auto pb-12">
-                    <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-4">Offline Records Engine</h2>
+                    <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-4">Past Patients</h2>
 
                     <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
                         <ul className="divide-y divide-slate-100">
@@ -167,12 +167,6 @@ const DashboardPage: React.FC = () => {
                                         <p className="text-xs text-slate-400 mt-1 truncate max-w-[200px]">{patient.chief_complaint}</p>
                                     </div>
                                     <div className="flex items-center gap-3">
-                                        <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${patient.synced
-                                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
-                                                : 'bg-amber-50 text-amber-700 border border-amber-100'
-                                            }`}>
-                                            {patient.synced ? 'Synced' : 'Pending'}
-                                        </span>
                                         <button
                                             onClick={() => navigate('/builder', { state: { patientId: patient.id } })}
                                             className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest text-teal-600 bg-teal-50 border border-teal-200 rounded-lg hover:bg-teal-100 transition-colors"
