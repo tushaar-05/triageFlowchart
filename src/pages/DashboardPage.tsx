@@ -136,7 +136,7 @@ const DashboardPage: React.FC = () => {
                                 <li className="px-6 py-8 text-center text-slate-500 text-sm">No recent patients stored offline.</li>
                             )}
 
-                            {recentPatients?.map(patient => (
+                            {recentPatients?.map((patient: any) => (
                                 <li key={patient.id} className="flex items-center justify-between p-4 hover:bg-slate-50 transition-colors">
                                     <div className="flex flex-col">
                                         <div className="flex items-center gap-3">
@@ -146,8 +146,8 @@ const DashboardPage: React.FC = () => {
                                         <p className="text-xs text-slate-400 mt-1 truncate max-w-[200px]">{patient.chief_complaint}</p>
                                     </div>
                                     <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${patient.synced
-                                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
-                                            : 'bg-amber-50 text-amber-700 border border-amber-100'
+                                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+                                        : 'bg-amber-50 text-amber-700 border border-amber-100'
                                         }`}>
                                         {patient.synced ? 'Synced' : 'Pending Cloud Sync'}
                                     </span>

@@ -12,6 +12,7 @@ import {
 } from '@xyflow/react';
 import type { Connection, Edge, Node } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import { callAI } from '../ai/triageEngine';
 
 interface ProtocolBuilderPageProps {
     onBack?: () => void;
@@ -68,11 +69,19 @@ const LevelZoneNode = ({ data }: any) => {
 
 const QuestionNode = ({ data, id }: any) => {
     const [selectedOption, setSelectedOption] = useState<string | null>(data.selectedOption || null);
+    const [subjectiveNote, setSubjectiveNote] = useState<string>(data.subjectiveInput || '');
 
     // Only track state changes within the component's internal UI feeling
     const handleSelect = (opt: string) => {
         setSelectedOption(opt);
-        window.dispatchEvent(new CustomEvent('triage-option-selected', { detail: { option: opt, nodeId: id, level: data.level } }));
+        window.dispatchEvent(new CustomEvent('triage-option-selected', { detail: { option: opt, subjectiveInput: subjectiveNote, nodeId: id, level: data.level } }));
+    };
+
+    const handleSendNote = () => {
+        if (!subjectiveNote.trim() && !selectedOption) return;
+        const opt = selectedOption || 'Other';
+        setSelectedOption(opt);
+        window.dispatchEvent(new CustomEvent('triage-option-selected', { detail: { option: opt, subjectiveInput: subjectiveNote, nodeId: id, level: data.level } }));
     };
 
     return (
@@ -113,13 +122,36 @@ const QuestionNode = ({ data, id }: any) => {
                 </div>
 
                 <div className="pt-2 border-t border-slate-100">
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Subjective Notes</label>
-                    <textarea
-                        className="w-full text-xs p-3 border border-slate-200 rounded-lg bg-slate-50 resize-none outline-none focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all text-slate-700 placeholder:text-slate-400 shadow-inner"
-                        placeholder="Optional context from nurse..."
-                        rows={2}
-                        defaultValue={data.subjectiveInput || ''}
-                    />
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 flex justify-between">
+                        Subjective Notes
+                    </label>
+                    <div className="flex flex-col gap-2">
+                        <textarea
+                            className="w-full text-xs p-3 border border-slate-200 rounded-lg bg-slate-50 resize-none outline-none focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all text-slate-700 placeholder:text-slate-400 shadow-inner"
+                            placeholder="Type an answer or context here..."
+                            rows={2}
+                            value={subjectiveNote}
+                            onChange={(e) => setSubjectiveNote(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                    e.preventDefault();
+                                    handleSendNote();
+                                }
+                            }}
+                        />
+                        {!selectedOption && (
+                            <div className="flex justify-end">
+                                <button
+                                    onClick={handleSendNote}
+                                    disabled={!subjectiveNote.trim()}
+                                    className="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-md text-[10px] font-bold uppercase tracking-wider hover:bg-indigo-100 transition-colors disabled:opacity-50 flex items-center gap-1 border border-indigo-200"
+                                >
+                                    <span>Submit</span>
+                                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
             {/* Invisible handles just to satisfy React Flow's engine internally if needed */}
@@ -183,18 +215,29 @@ const FlowCanvas = () => {
 
         let fetchedSuggestions = [];
         try {
-            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
-            const res = await fetch(`${apiUrl}/api/ai/suggest-layer`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ complaint, currentLevel: nextLevel })
-            });
-            const data = await res.json();
+            // Dynamically build the history from nodes that have been dragged and answered
+            const allNodes = getNodes();
+            const answeredHistory = allNodes
+                .filter(n => n.type === 'questionNode' && n.data.answered)
+                .sort((a, b) => (Number(a.data.level) || 0) - (Number(b.data.level) || 0))
+                .map(n => `AI Question: ${n.data.question} -> Patient: ${n.data.selectedOption} ${n.data.subjectiveInput ? `(Notes: ${n.data.subjectiveInput})` : ''}`);
 
-            if (data.success && data.suggestions) {
-                fetchedSuggestions = data.suggestions;
-            } else {
-                throw new Error("Local AI failed to generate suggestions.");
+            const response = await callAI(complaint, answeredHistory);
+
+            if (response.type === 'result') {
+                fetchedSuggestions = [{
+                    id: `result-${Date.now()}`,
+                    type: 'FINAL DECISION',
+                    question: `Triage Result: ${response.risk_level} Risk\nAction: ${response.action}\nReason: ${response.reason}`,
+                    options: ['Complete Triage']
+                }];
+            } else if (response.follow_up_questions) {
+                fetchedSuggestions = response.follow_up_questions.map((q: any, i: number) => ({
+                    id: `sq-l${nextLevel}-${Date.now()}-${i}`,
+                    type: `${q.priority} PRIORITY`,
+                    question: q.question,
+                    options: q.expected_answers || []
+                }));
             }
         } catch (error) {
             console.error("Falling back to standard mock arrays due to error:", error);
@@ -290,7 +333,7 @@ const FlowCanvas = () => {
             setNodes((nds) => {
                 return nds.map((n) => {
                     if (n.id === nodeId) {
-                        return { ...n, data: { ...n.data, answered: true, selectedOption: e.detail.option } };
+                        return { ...n, data: { ...n.data, answered: true, selectedOption: e.detail.option, subjectiveInput: e.detail.subjectiveInput } };
                     }
                     return n;
                 });
