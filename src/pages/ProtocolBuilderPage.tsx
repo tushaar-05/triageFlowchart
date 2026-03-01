@@ -320,22 +320,27 @@ const FlowCanvas = () => {
         setCurrentLevel(nextLevel);
         setIsAiThinking(false);
 
-        // Zone sizing — each node is ~380px tall, add 120px for zone header + padding
+        // Zone sizing
         const nodeCount = fetchedSuggestions.length;
-        const zoneHeight = Math.max(380, nodeCount * 60 + 280);
+        const NODE_WIDTH = 310;
+        const GAP = 30;
+        const PADDING = 50; // left/right padding inside zone
+        const totalWidth = Math.max(900, nodeCount * NODE_WIDTH + (nodeCount - 1) * GAP + PADDING * 2);
+        const zoneHeight = Math.max(500, NODE_WIDTH + 200); // tall enough for full card
 
-        // Add the new Zone structurally — spacing = 600px between zones
+        // Zone position — centered on screen, stacked vertically
         const newZoneY = nextLevel === 1 ? 300 : 300 + (nextLevel - 1) * 620;
         const newZoneId = `zone-level-${nextLevel}`;
+        const zoneX = window.innerWidth / 2 - totalWidth / 2 - 50;
 
-        // Horizontal layout: center nodes inside the zone
-        const NODE_SPACING = 340;
-        const totalWidth = Math.max(900, nodeCount * NODE_SPACING + 80);
-
+        // Question nodes — positioned inside the zone using zoneX as the anchor
         const newQuestionNodes: Node[] = fetchedSuggestions.map((s: any, i: number) => ({
             id: `node-q-${nextLevel}-${i}-${Date.now()}`,
             type: 'questionNode',
-            position: { x: (window.innerWidth / 2 - 450) + (i * NODE_SPACING) + (totalWidth / 2 - (nodeCount * NODE_SPACING) / 2), y: newZoneY + 80 },
+            position: {
+                x: zoneX + PADDING + i * (NODE_WIDTH + GAP),
+                y: newZoneY + 70  // 70px from zone top (after header)
+            },
             data: { ...s, level: nextLevel, answered: false },
             draggable: false,
             zIndex: 10
@@ -346,7 +351,7 @@ const FlowCanvas = () => {
             const zoneNode: Node = {
                 id: newZoneId,
                 type: 'levelZone',
-                position: { x: window.innerWidth / 2 - totalWidth / 2 - 50, y: newZoneY },
+                position: { x: zoneX, y: newZoneY },
                 data: { level: nextLevel, hasNodes: nodeCount > 0, allAnswered: false, nodeCount, width: totalWidth },
                 style: { width: totalWidth, minHeight: zoneHeight },
                 draggable: false,
