@@ -324,11 +324,14 @@ Response:
 
 ## 14. Team Roles & Responsibilities
 
-| Member Name | Role | Responsibilities |
-|---|---|---|
-| Tushar Singh | Full Stack & AI Integration | Frontend (React, React Flow), Backend (Node.js, Express), AI prompt engineering, Groq/Ollama integration, deployment |
-| Sai Hrudhay | AI Models | AI model research, HealthSoft model selection, offline model evaluation |
-| Madhav Agarwal | Frontend | UI components, flowchart builder interface |
+**Tushar Singh** — Full Stack & AI Integration
+Frontend (React, React Flow), Backend (Node.js, Express), AI prompt engineering, Groq/Ollama integration, deployment.
+
+**Sai Hrudhay** — AI Models
+AI model research, HealthSoft model selection, offline model evaluation.
+
+**Madhav Agarwal** — Frontend
+UI components, flowchart builder interface.
 
 ---
 
