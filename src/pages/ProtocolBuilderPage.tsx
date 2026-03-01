@@ -77,7 +77,11 @@ const QuestionNode = ({ data, id }: any) => {
         window.dispatchEvent(new CustomEvent('triage-option-selected', { detail: { option: opt, subjectiveInput: subjectiveNote, nodeId: id, level: data.level } }));
     };
 
-    const handleSendNote = () => {
+    const handleSendNote = (e?: React.MouseEvent | React.KeyboardEvent) => {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
         if (!subjectiveNote.trim() && !selectedOption) return;
         const opt = selectedOption || 'Other';
         setSelectedOption(opt);
@@ -109,9 +113,10 @@ const QuestionNode = ({ data, id }: any) => {
                 <div className="flex gap-2.5 flex-wrap">
                     {data.options?.map((opt: string) => (
                         <button
+                            type="button"
                             key={opt}
-                            onClick={() => handleSelect(opt)}
-                            className={`flex-1 py-2 px-3 border rounded-lg text-xs font-bold transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 active:scale-[0.98] ${selectedOption === opt
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleSelect(opt); }}
+                            className={`nodrag flex-1 py-2 px-3 border rounded-lg text-xs font-bold transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 active:scale-[0.98] ${selectedOption === opt
                                 ? 'bg-indigo-50 border-indigo-500 text-indigo-700 ring-2 ring-indigo-500/20'
                                 : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 hover:text-slate-900'
                                 }`}
@@ -127,22 +132,22 @@ const QuestionNode = ({ data, id }: any) => {
                     </label>
                     <div className="flex flex-col gap-2">
                         <textarea
-                            className="w-full text-xs p-3 border border-slate-200 rounded-lg bg-slate-50 resize-none outline-none focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all text-slate-700 placeholder:text-slate-400 shadow-inner"
+                            className="nodrag w-full text-xs p-3 border border-slate-200 rounded-lg bg-slate-50 resize-none outline-none focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all text-slate-700 placeholder:text-slate-400 shadow-inner"
                             placeholder="Type an answer or context here..."
                             rows={2}
                             value={subjectiveNote}
                             onChange={(e) => setSubjectiveNote(e.target.value)}
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter' && !e.shiftKey) {
-                                    e.preventDefault();
-                                    handleSendNote();
+                                    handleSendNote(e);
                                 }
                             }}
                         />
                         {!selectedOption && (
-                            <div className="flex justify-end">
+                            <div className="flex justify-end nodrag">
                                 <button
-                                    onClick={handleSendNote}
+                                    type="button"
+                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleSendNote(); }}
                                     disabled={!subjectiveNote.trim()}
                                     className="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-md text-[10px] font-bold uppercase tracking-wider hover:bg-indigo-100 transition-colors disabled:opacity-50 flex items-center gap-1 border border-indigo-200"
                                 >
