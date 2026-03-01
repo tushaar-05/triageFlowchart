@@ -19,7 +19,6 @@ const DashboardPage: React.FC = () => {
     const [name, setName] = useState('');
     const [age, setAge] = useState('');
     const [gender, setGender] = useState('');
-    const [complaint, setComplaint] = useState('');
     const [isSaving, setIsSaving] = useState(false);
     const [demoIndex, setDemoIndex] = useState(0);
 
@@ -28,7 +27,6 @@ const DashboardPage: React.FC = () => {
         setName(demo.name);
         setAge(demo.age);
         setGender(demo.gender);
-        setComplaint(demo.complaint);
         setDemoIndex(i => i + 1);
     };
 
@@ -56,8 +54,8 @@ const DashboardPage: React.FC = () => {
     };
 
     const handleStartTriage = async () => {
-        if (!name || !age || !gender || !complaint) {
-            alert("Please fill out all fields (Name, Age, Gender, Chief Complaint) to start triage.");
+        if (!name || !age || !gender) {
+            alert("Please fill out Name, Age and Gender to start triage.");
             return;
         }
         setIsSaving(true);
@@ -71,7 +69,7 @@ const DashboardPage: React.FC = () => {
                 gender,
                 phone: '',
                 address: '',
-                chief_complaint: complaint,
+                chief_complaint: '',
                 created_at: new Date().toISOString(),
                 synced: false // Default to false until successful network request
             });
@@ -208,7 +206,6 @@ const DashboardPage: React.FC = () => {
                                     <option value="female">Female</option>
                                 </select>
                             </div>
-                            <textarea value={complaint} onChange={e => setComplaint(e.target.value)} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-sm min-h-[100px] resize-none" placeholder="Chief Complaint"></textarea>
                         </div>
                         <div className="px-6 py-4 border-t border-slate-100 flex justify-end gap-3">
                             <button onClick={() => setIsAddPatientModalOpen(false)} className="px-5 py-2.5 text-sm font-semibold text-slate-600 bg-white border border-slate-200 rounded-lg">Cancel</button>
