@@ -262,7 +262,8 @@ const FlowCanvas = () => {
     // Triage App State
     const [complaint, setComplaint] = useState('');
     const [hasStarted, setHasStarted] = useState(false);
-    const [suggestions, setSuggestions] = useState<any[]>([]);
+    // suggestions state kept minimal — tray removed, nodes auto-place on canvas
+    const setSuggestions = (_: any[]) => { }; // no-op, kept for call-site compatibility
     const [isAiThinking, setIsAiThinking] = useState(false);
 
     // Level tracking
@@ -314,7 +315,8 @@ const FlowCanvas = () => {
             fetchedSuggestions = nextSugs.map(s => ({ ...s, id: `sq-l${nextLevel}-${s.id}-${Date.now()}` }));
         }
 
-        setSuggestions(fetchedSuggestions);
+        // Nodes are auto-placed directly into the canvas zone below — clear the tray
+        setSuggestions([]);
         setCurrentLevel(nextLevel);
         setIsAiThinking(false);
 
@@ -532,8 +534,7 @@ const FlowCanvas = () => {
                 return [...mappedNds, newNode];
             });
 
-            // Remove from graphical UI Tray
-            setSuggestions((sugs) => sugs.filter(s => s.id !== suggestionData.id));
+            // Tray removed — nodes auto-placed, nothing to remove here
         },
         [screenToFlowPosition, getNodes, setNodes, currentLevel]
     );
@@ -579,59 +580,13 @@ const FlowCanvas = () => {
                 </div>
             </div>
 
-            {/* 2. AI Question Suggestion Container */}
-            {hasStarted && (
-                <div className={`bg-slate-100 border-b border-slate-200 p-4 shrink-0 shadow-inner z-20 relative h-[210px] transition-all duration-500 ${isAiThinking ? 'bg-indigo-50/50' : ''}`}>
-                    <div className="flex items-center gap-2 mb-3 px-2 max-w-7xl mx-auto">
-                        {isAiThinking ? (
-                            <div className="flex items-center gap-2">
-                                <div className="w-4 h-4 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin"></div>
-                                <h3 className="text-xs font-bold text-indigo-500 uppercase tracking-widest">Compiling Level {currentLevel} Matrix...</h3>
-                            </div>
-                        ) : (
-                            <>
-                                <div className="w-2.5 h-2.5 rounded-full bg-indigo-500 animate-pulse shadow-[0_0_8px_rgba(99,102,241,0.6)]"></div>
-                                <h3 className="text-xs font-bold text-slate-700 uppercase tracking-widest">Next Suggested Questions <span className="text-slate-400 font-normal">(Based on Layer {currentLevel - 1 > 0 ? currentLevel - 1 : 'Root'} State)</span></h3>
-                            </>
-                        )}
-                    </div>
-
-                    {/* Scrollable container for cards */}
-                    <div className="flex gap-4 overflow-x-auto pb-4 pt-1 px-2 snap-x max-w-7xl mx-auto custom-scrollbar">
-                        {!isAiThinking && suggestions.map(sug => (
-                            <div
-                                key={sug.id}
-                                draggable
-                                onDragStart={(e) => {
-                                    e.dataTransfer.setData('application/reactflow', JSON.stringify(sug));
-                                    e.dataTransfer.effectAllowed = 'move';
-                                }}
-                                className="shrink-0 w-72 bg-white border-2 border-slate-200 rounded-xl p-4 cursor-grab active:cursor-grabbing hover:border-indigo-400 hover:shadow-lg transition-all snap-start flex flex-col group"
-                            >
-                                <div className="flex justify-between items-start mb-2.5">
-                                    <span className="text-[10px] font-bold text-slate-400 group-hover:text-indigo-500 transition-colors uppercase tracking-wider">{sug.type}</span>
-                                </div>
-                                <p className="text-sm font-bold text-slate-800 leading-snug mb-4 flex-1">{sug.question}</p>
-                                <div className="flex gap-1.5 flex-wrap">
-                                    {sug.options.slice(0, 3).map((opt: string) => (
-                                        <span key={opt} className="px-2 py-1 bg-slate-50 border border-slate-100 rounded text-[10px] font-bold text-slate-500">{opt}</span>
-                                    ))}
-                                    {sug.options.length > 3 && <span className="px-2 py-1 bg-slate-50 rounded text-[10px] font-bold text-slate-400">+{sug.options.length - 3}</span>}
-                                </div>
-                            </div>
-                        ))}
-
-                        {!isAiThinking && suggestions.length === 0 && (
-                            <div className="w-full flex justify-center items-center py-6">
-                                <div className="flex flex-col items-center gap-2">
-                                    <svg className="w-8 h-8 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    <span className="text-sm font-bold text-slate-400">Layer staging complete. Answer canvas items to proceed.</span>
-                                </div>
-                            </div>
-                        )}
-                    </div>
+            {/* 2. AI Thinking Status Bar — only visible while AI is generating */}
+            {hasStarted && isAiThinking && (
+                <div className="bg-indigo-50 border-b border-indigo-100 px-6 py-3 shrink-0 z-20 flex items-center gap-3">
+                    <div className="w-4 h-4 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin shrink-0"></div>
+                    <span className="text-xs font-bold text-indigo-600 uppercase tracking-widest">
+                        AI is generating Layer {currentLevel} questions...
+                    </span>
                 </div>
             )}
 
