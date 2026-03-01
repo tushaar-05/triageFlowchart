@@ -250,25 +250,45 @@ const LEVEL_3_SUGGESTIONS = [
 
 // ── Main Component ──
 
+const getInitialState = () => {
+    try {
+        const item = window.localStorage.getItem('triageFlowState');
+        return item ? JSON.parse(item) : null;
+    } catch { return null; }
+};
+
 const FlowCanvas = () => {
+    const initialState = React.useMemo(() => getInitialState(), []);
+
     // Canvas State
-    const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
-    const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
+    const [nodes, setNodes, onNodesChange] = useNodesState<Node>(initialState?.nodes || []);
+    const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(initialState?.edges || []);
     const { screenToFlowPosition, getNodes, fitView } = useReactFlow();
 
     // No-op connect handler – this canvas is layered not branched
     const onConnect = useCallback((_params: Connection) => { }, []);
 
     // Triage App State
-    const [complaint, setComplaint] = useState('');
-    const [hasStarted, setHasStarted] = useState(false);
+    const [complaint, setComplaint] = useState(initialState?.complaint || '');
+    const [hasStarted, setHasStarted] = useState(initialState?.hasStarted || false);
     // suggestions state kept minimal — tray removed, nodes auto-place on canvas
     const setSuggestions = (_: any[]) => { }; // no-op, kept for call-site compatibility
     const [isAiThinking, setIsAiThinking] = useState(false);
 
     // Level tracking
-    const [currentLevel, setCurrentLevel] = useState(1);
+    const [currentLevel, setCurrentLevel] = useState(initialState?.currentLevel || 1);
     const reactFlowWrapper = useRef<HTMLDivElement>(null);
+
+    // Persist state to localStorage
+    useEffect(() => {
+        window.localStorage.setItem('triageFlowState', JSON.stringify({
+            nodes,
+            edges,
+            complaint,
+            hasStarted,
+            currentLevel
+        }));
+    }, [nodes, edges, complaint, hasStarted, currentLevel]);
 
     // Dynamic layer generation talking to Ollama API!
     const generateNextLayer = useCallback(async (nextLevel: number) => {
@@ -394,31 +414,34 @@ const FlowCanvas = () => {
         setHasStarted(true);
         setCurrentLevel(1);
 
-        // Setup initial structure: Root
-        const rootNode = {
-            id: 'root-complaint',
+        // Make root node
+        const rootId = `root-${Date.now()}`;
+        setNodes([{
+            id: rootId,
             type: 'rootNode',
             position: { x: window.innerWidth / 2 - 140, y: 50 },
             data: { complaint },
-            draggable: false,
-        };
-
-        setNodes([rootNode]);
-
-        // Kick off the AI Request for Level 1 questions!
-        await generateNextLayer(1);
-
-        // Structural downward link to level 1 generated inside generateNextLayer
-        setEdges([{
-            id: 'e-progression-1',
-            source: 'root-complaint',
-            target: 'zone-level-1',
-            type: 'straight',
-            style: { stroke: '#cbd5e1', strokeWidth: 4, strokeDasharray: '5,5' },
-            animated: true
+            draggable: false
         }]);
+        setEdges([]);
 
-        setTimeout(() => fitView({ duration: 800, padding: 0.2 }), 50);
+        // Initiate AI call
+        generateNextLayer(1);
+    };
+
+    const handleExportJSON = () => {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({
+            nodes,
+            edges,
+            complaint,
+            currentLevel
+        }, null, 2));
+        const downloadAnchorNode = document.createElement('a');
+        downloadAnchorNode.setAttribute("href", dataStr);
+        downloadAnchorNode.setAttribute("download", `triage_flow_${Date.now()}.json`);
+        document.body.appendChild(downloadAnchorNode); // required for firefox
+        downloadAnchorNode.click();
+        downloadAnchorNode.remove();
     };
 
     // Tracking answered questions to trigger next layer intelligently
@@ -580,12 +603,25 @@ const FlowCanvas = () => {
                                 Start Triage
                             </button>
                         ) : (
-                            <button
-                                onClick={() => { setHasStarted(false); setNodes([]); setEdges([]); setComplaint(''); }}
-                                className="w-full sm:w-auto px-6 py-3.5 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 transition shadow-sm"
-                            >
-                                Reset Model
-                            </button>
+                            <div className="flex gap-2 w-full sm:w-auto">
+                                <button
+                                    onClick={() => {
+                                        window.localStorage.removeItem('triageFlowState');
+                                        setHasStarted(false); setNodes([]); setEdges([]); setComplaint('');
+                                    }}
+                                    className="px-4 py-3.5 bg-white border border-slate-200 text-slate-400 font-bold rounded-xl hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition shadow-sm flex-shrink-0"
+                                    title="Reset Flowchart"
+                                >
+                                    <svg className="w-5 h-5 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                                </button>
+                                <button
+                                    onClick={handleExportJSON}
+                                    className="w-full sm:w-auto px-6 py-3.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition shadow-sm flex items-center gap-2"
+                                >
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                                    Export JSON
+                                </button>
+                            </div>
                         )}
                     </div>
                 </div>
