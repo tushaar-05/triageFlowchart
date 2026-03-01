@@ -303,7 +303,7 @@ Response:
 
 **Live Demo Link:** https://triagesystem.vercel.app
 
-**Demo Video Link:** https://drive.google.com/drive/folders/1uQ0MDyjX2n2gTcINgKKCQDu1TpexZYBV
+**Demo Video Link:** https://drive.google.com/file/d/1fc8wPbAIdPacuXZ-DAi251HOgXTxvYDI/view?usp=sharing
 
 **GitHub Repository:** https://github.com/tushaar-05/triageFlowchart
 
