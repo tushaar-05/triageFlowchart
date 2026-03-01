@@ -45,7 +45,11 @@ const UserIcon = () => (
 
 // ─── LoginCard ────────────────────────────────────────────────────────────────
 
-const LoginCard: React.FC = () => {
+interface LoginCardProps {
+  onLoginSuccess?: () => void;
+}
+
+const LoginCard: React.FC<LoginCardProps> = ({ onLoginSuccess }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [staffId, setStaffId] = useState('');
@@ -199,6 +203,10 @@ const LoginCard: React.FC = () => {
               loading={isLoading}
               fullWidth
               leftIcon={<UserIcon />}
+              onClick={(e) => {
+                e.preventDefault();
+                if (onLoginSuccess) onLoginSuccess();
+              }}
             >
               {isLoading ? 'Signing in…' : 'Sign in to TriageFlow'}
             </Button>
@@ -225,6 +233,7 @@ const LoginCard: React.FC = () => {
                 d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
             </svg>
           }
+          onClick={onLoginSuccess}
         >
           Continue as Guest (Demo Mode)
         </Button>

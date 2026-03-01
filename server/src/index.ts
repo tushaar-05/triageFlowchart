@@ -5,6 +5,7 @@ import authRoutes from './routes/auth';
 import patientRoutes from './routes/patients';
 import protocolRoutes from './routes/protocols';
 import caseRoutes from './routes/cases';
+import aiRoutes from './routes/ai';
 
 dotenv.config();
 
@@ -13,12 +14,17 @@ const port = process.env.PORT || 4000;
 
 app.use(cors());
 app.use(express.json());
+// Root endpoint so Render health checks and browser testing don't say "Cannot GET /"
+app.get('/', (_req, res) => {
+  res.send('TriageFlow API is live and running. Use /api/* endpoints.');
+});
 
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/patients', patientRoutes);
 app.use('/api/protocols', protocolRoutes);
 app.use('/api/cases', caseRoutes);
+app.use('/api/ai', aiRoutes);
 
 // Health check
 app.get('/api/health', (_req, res) => {

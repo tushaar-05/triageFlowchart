@@ -10,6 +10,7 @@ export async function callOllama(prompt: string) {
       model: "jayasimma/healthsoft",
       prompt: prompt,
       stream: false,
+      // 🔥 THIS IS THE IMPORTANT PART
       options: {
         temperature: 0.1,
         top_p: 0.1,
