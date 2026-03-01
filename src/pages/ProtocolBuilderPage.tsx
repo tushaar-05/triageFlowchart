@@ -11,6 +11,7 @@ import {
     useReactFlow
 } from '@xyflow/react';
 import type { Connection, Edge, Node } from '@xyflow/react';
+import { useLocation } from 'react-router-dom';
 import '@xyflow/react/dist/style.css';
 import { callAI } from '../ai/triageEngine';
 
@@ -250,15 +251,18 @@ const LEVEL_3_SUGGESTIONS = [
 
 // ── Main Component ──
 
-const getInitialState = () => {
+const getInitialState = (key: string) => {
     try {
-        const item = window.localStorage.getItem('triageFlowState');
+        const item = window.localStorage.getItem(key);
         return item ? JSON.parse(item) : null;
     } catch { return null; }
 };
 
 const FlowCanvas = () => {
-    const initialState = React.useMemo(() => getInitialState(), []);
+    const location = useLocation();
+    const patientId = (location.state as any)?.patientId ?? 'default';
+    const storageKey = `triageFlow_${patientId}`;
+    const initialState = React.useMemo(() => getInitialState(storageKey), [storageKey]);
 
     // Canvas State
     const [nodes, setNodes, onNodesChange] = useNodesState<Node>(initialState?.nodes || []);
@@ -279,16 +283,16 @@ const FlowCanvas = () => {
     const [currentLevel, setCurrentLevel] = useState(initialState?.currentLevel || 1);
     const reactFlowWrapper = useRef<HTMLDivElement>(null);
 
-    // Persist state to localStorage
+    // Persist state to localStorage keyed by patientId
     useEffect(() => {
-        window.localStorage.setItem('triageFlowState', JSON.stringify({
+        window.localStorage.setItem(storageKey, JSON.stringify({
             nodes,
             edges,
             complaint,
             hasStarted,
             currentLevel
         }));
-    }, [nodes, edges, complaint, hasStarted, currentLevel]);
+    }, [storageKey, nodes, edges, complaint, hasStarted, currentLevel]);
 
     // Dynamic layer generation talking to Ollama API!
     const generateNextLayer = useCallback(async (nextLevel: number) => {
@@ -606,7 +610,7 @@ const FlowCanvas = () => {
                             <div className="flex gap-2 w-full sm:w-auto">
                                 <button
                                     onClick={() => {
-                                        window.localStorage.removeItem('triageFlowState');
+                                        window.localStorage.removeItem(storageKey);
                                         setHasStarted(false); setNodes([]); setEdges([]); setComplaint('');
                                     }}
                                     className="px-4 py-3.5 bg-white border border-slate-200 text-slate-400 font-bold rounded-xl hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition shadow-sm flex-shrink-0"

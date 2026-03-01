@@ -64,7 +64,7 @@ const DashboardPage: React.FC = () => {
 
         try {
             // 1. Instantly save to local offline DB (IndexedDB)
-            await db.patients.add({
+            const savedId = await db.patients.add({
                 staff_id: 'DEMO-ADMIN',
                 name,
                 age: Number(age),
@@ -82,8 +82,8 @@ const DashboardPage: React.FC = () => {
             // Clear any previous patient's flowchart before navigating
             window.localStorage.removeItem('triageFlowState');
 
-            // Navigate to builder
-            navigate('/builder');
+            // Navigate to builder — pass the patient ID so the canvas key is per-patient
+            navigate('/builder', { state: { patientId: savedId } });
         } catch (error) {
             console.error('Failed to save to local DB:', error);
         } finally {
@@ -166,12 +166,21 @@ const DashboardPage: React.FC = () => {
                                         </div>
                                         <p className="text-xs text-slate-400 mt-1 truncate max-w-[200px]">{patient.chief_complaint}</p>
                                     </div>
-                                    <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${patient.synced
-                                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
-                                        : 'bg-amber-50 text-amber-700 border border-amber-100'
-                                        }`}>
-                                        {patient.synced ? 'Synced' : 'Pending Cloud Sync'}
-                                    </span>
+                                    <div className="flex items-center gap-3">
+                                        <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${patient.synced
+                                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+                                                : 'bg-amber-50 text-amber-700 border border-amber-100'
+                                            }`}>
+                                            {patient.synced ? 'Synced' : 'Pending'}
+                                        </span>
+                                        <button
+                                            onClick={() => navigate('/builder', { state: { patientId: patient.id } })}
+                                            className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest text-teal-600 bg-teal-50 border border-teal-200 rounded-lg hover:bg-teal-100 transition-colors"
+                                        >
+                                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+                                            Open Flow
+                                        </button>
+                                    </div>
                                 </li>
                             ))}
                         </ul>
