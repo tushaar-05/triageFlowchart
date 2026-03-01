@@ -358,8 +358,10 @@ const FlowCanvas = () => {
                         return n;
                     }));
 
-                    // AI progresses structurally
-                    if (level < 3) {
+                    // Stop progressing if we hit the final clinical decision
+                    const hasFinalDecision = nodesInLevel.some(n => n.data.type === 'FINAL DECISION');
+
+                    if (!hasFinalDecision && level < 15) {
                         generateNextLayer(level + 1);
                     }
                 }
