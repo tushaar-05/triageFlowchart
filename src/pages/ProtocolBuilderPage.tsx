@@ -229,11 +229,19 @@ const FlowCanvas = () => {
 
             const response = await callAI(complaint, answeredHistory);
 
-            if (response.type === 'result') {
+            // Force a final result on the frontend if:
+            // 1. AI returned a result, OR
+            // 2. We've already done 2+ layers of Q&A (to prevent infinite loops)
+            const shouldForceResult = response.type === 'result' || answeredHistory.length >= 8;
+
+            if (shouldForceResult) {
+                const riskLevel = response.risk_level || 'MEDIUM';
+                const action = response.action || 'Consult attending physician for further assessment';
+                const reason = response.reason || 'Sufficient data gathered from multi-layer triage.';
                 fetchedSuggestions = [{
                     id: `result-${Date.now()}`,
                     type: 'FINAL DECISION',
-                    question: `Triage Result: ${response.risk_level} Risk\nAction: ${response.action}\nReason: ${response.reason}`,
+                    question: `Triage Result: ${riskLevel} Risk\nAction: ${action}\nReason: ${reason}`,
                     options: ['Complete Triage']
                 }];
             } else if (response.follow_up_questions) {
@@ -359,8 +367,13 @@ const FlowCanvas = () => {
                         return n;
                     }));
 
-                    // AI progresses structurally until a final decision is reached (up to an arbitrary safety limit)
-                    if (!hasFinalDecision && level < 15) {
+                    // Progress to the next layer of questions, but only if:
+                    // 1. Not yet reached the final decision
+                    // 2. Under the hard cap of 3 rounds of questions before a forced result
+                    if (!hasFinalDecision && level < 3) {
+                        generateNextLayer(level + 1);
+                    } else if (!hasFinalDecision && level >= 3) {
+                        // Level 3+ = force the final AI assessment (answeredHistory >= 8 will trigger forceResult)
                         generateNextLayer(level + 1);
                     }
                 }

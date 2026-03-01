@@ -98,8 +98,15 @@ Rules:
 
   const transcript = [...(history || []), `Patient: ${input}`].join("\n");
 
+  // If the patient has answered a solid round of questions (typically 8 from 2 layers),
+  // force the AI to make a conclusive decision to prevent infinite loops.
+  const forceResult = (history && history.length >= 8)
+    ? "\n🛑 CRITICAL DIRECTIVE: You have gathered enough information from the patient. You MUST output a FINAL ASSESSMENT ('type': 'result') now. DO NOT ask any more questions."
+    : "";
+
   const fullPrompt = `
 ${systemPrompt}
+${forceResult}
 
 CONVERSATION TRANSCRIPT:
 ${transcript}
